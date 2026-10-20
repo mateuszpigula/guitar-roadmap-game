@@ -1,0 +1,5 @@
+project_id = "guitar-roadmap-game"
+[auth]
+site_url = "https://guitar-roadmap-game.vercel.app"
+additional_redirect_urls = ["http://127.0.0.1:5173", "http://localhost:5173", "https://guitar-roadmap-game.vercel.app"]
+minimum_password_length = 10

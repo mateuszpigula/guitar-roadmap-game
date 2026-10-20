@@ -6,3 +6,5 @@ output/
 .vercel/
 .env
 .env.*
+.vercel
+.env*

@@ -19,7 +19,7 @@ npm run build
 npm run preview
 ```
 
-`dist/` zawiera gotową statyczną aplikację. Nie otwieraj pliku HTML przez `file://`; użyj serwera HTTP. Domyślne uruchomienie jest dostępne tylko na tym komputerze. Układ mobilny nie oznacza automatycznej synchronizacji z telefonem. Aby używać własnego telefonu, potrzebny jest dostępny dla niego host; przenieś postęp eksportem/importem. Nic nie jest publikowane przez ten projekt.
+`dist/` zawiera gotową statyczną aplikację. Nie otwieraj pliku HTML przez `file://`; użyj serwera HTTP. Domyślne uruchomienie jest dostępne tylko na tym komputerze. Wdrożenie: https://guitar-roadmap-game.vercel.app. Po zalogowaniu tym samym kontem telefon i komputer synchronizują postęp. Bez konfiguracji Supabase działa tryb lokalny.
 
 ## Dane i kopie
 
@@ -28,8 +28,8 @@ npm run preview
 - `src/storage.ts` definiuje granicę repozytorium (`load`, `save`), którą można zastąpić backendem.
 - Eksport/import dostępny w **Twoje postępy**. Import przechodzi walidację i wymaga potwierdzenia zastąpienia obecnego stanu.
 - Błąd odczytu nie powoduje automatycznego nadpisania bazy. Błąd zapisu pokazuje komunikat, pozwala wyeksportować stan i ponowić zapis.
-- Używaj jednej aktywnej karty do edycji postępu. Synchronizacja wielu kart i urządzeń nie jest częścią tej wersji.
-- Czyszczenie danych strony usuwa postęp. Zachowaj kopię JSON przed takim działaniem.
+- Konta mają osobne kopie offline w IndexedDB `guitar-quest-accounts`. Synchronizacja działa po zmianie (700 ms), co 12 sekund oraz po odzyskaniu połączenia i powrocie do karty. Web Locks serializują operacje kart tego samego konta w obsługiwanych przeglądarkach.
+- Czyszczenie danych strony usuwa lokalną kopię i niewysłane zmiany. Zsynchronizowany postęp wróci po zalogowaniu. Zachowaj eksport przed czyszczeniem danych.
 
 ## Zachowanie
 
@@ -39,7 +39,7 @@ Pierwsza powtórka przypada po jednym dniu. „Pamiętam” ustawia kolejne odst
 
 Codzienna sesja ma 15, 18 lub 20 minut. Zaznaczenie bloku zapisuje deklarowany czas ćwiczenia, nie pomiar czasu spędzonego w aplikacji. Zadanie zalicza się osobno. Historia zapisuje jeden zestaw bloków na lokalny dzień.
 
-Metronom używa harmonogramu AudioContext, a timer końca odliczania względem zegara. Odsłuch gryfu, akordów i quizów jest syntetyczny. Quizy są ćwiczeniami bieżącej serii; ich wynik nie zmienia XP. Nie jest potrzebny mikrofon, konto ani klucz API.
+Metronom używa harmonogramu AudioContext, a timer końca odliczania względem zegara. Odsłuch gryfu, akordów i quizów jest syntetyczny. Quizy są ćwiczeniami bieżącej serii; ich wynik nie zmienia XP. Nie jest potrzebny mikrofon. Konto jest wymagane tylko do synchronizacji.
 
 ## Program i źródła
 
@@ -52,3 +52,29 @@ Program ma charakter samodzielnej ścieżki praktycznej. Ostatni rozdział dotyc
 ## Weryfikacja
 
 Testy Vitest obejmują kompletność i graf zależności programu, XP, odblokowywanie, cofanie, terminy powtórek, walidację importu i repozytorium IndexedDB (fake-indexeddb). Testy ręczne przez agent-browser obejmują pełny przebieg użytkownika, układ desktop/mobile i Web Audio. Wyniki oraz lokalne media: `output/visual-reports/guitar-quest/` (poza Gitem).
+
+## Konto i synchronizacja
+
+1. Na stronie produkcyjnej wybierz **Zaloguj → Pierwszy raz? Utwórz konto**. Potwierdź e-mail i zaloguj się hasłem na obu urządzeniach.
+2. Stary zapis z localhost można przenieść, logując się na konto w lokalnej aplikacji i wybierając **Przenieś postęp z trybu lokalnego**. Alternatywnie wyeksportuj JSON z localhost, a na stronie produkcyjnej zaimportuj go po zalogowaniu. Import zastępuje stan konta i synchronizuje się.
+3. Nie trzeba eksportować danych przy kolejnych zmianach urządzenia. Poczekaj na **Zsynchronizowano**.
+
+Supabase: projekt `wlgixxrgkmzopwsacffq`, tabela `public.guitar_progress`, RLS ogranicza odczyt/zapis do `auth.uid()`. Funkcja `save_guitar_progress` porównuje rewizję w jednej transakcji. Klient łączy zmiany względem ostatniego wspólnego stanu; status zadania i terminy powtórek stanowią jeden element. Różne notatki tego samego zadania i konkurencyjne zmiany jednej sesji wywołują wybór użytkownika. Obie wersje można pobrać. Nigdy nie wybieramy po prostu całej „ostatniej” kopii.
+
+Kopia offline i ostatni wspólny stan zapisują się razem. Wylogowanie zachowuje osobną kopię konta; nie przenosi jej do trybu anonimowego. Kopia trybu lokalnego nie jest automatycznie wysyłana przy logowaniu. Dla prywatności na współdzielonym komputerze po synchronizacji i wylogowaniu można usunąć dane strony.
+
+Service worker w buildzie produkcyjnym zapisuje wyłącznie publiczne pliki aplikacji. Po pierwszym otwarciu online można ponownie otwierać aplikację bez internetu; zalogowanie i odświeżenie wygasłej sesji wymagają połączenia. Żądania Supabase nie są cache'owane przez service workera.
+
+### Konfiguracja
+
+Publiczne zmienne klienta (w `.env.local` i Vercelu):
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_PUBLISHABLE_KEY` (publishable lub legacy anon; nigdy service_role)
+
+`scripts/configure-cloud.mjs --vercel` używa zalogowanych CLI do zapisania publicznej konfiguracji bez wypisywania kluczy. Migracja bazy: `supabase/migrations/202610200001_progress_sync.sql` (wykonana jednokrotnie przez `supabase db query --linked --project-ref … -f …`). Adresy powrotu i długość hasła są w `supabase/config.toml`. Weryfikacja e-mail pozostaje włączona.
+
+Wysyłka potwierdzeń/resetu korzysta obecnie z domyślnej poczty Supabase: jest ograniczona do adresów członków organizacji i ma niski limit. Dla prywatnego właściciela użyj adresu swojego konta Supabase. Przed udostępnianiem aplikacji innym osobom skonfiguruj własny SMTP: https://supabase.com/docs/guides/auth/auth-smtp. Zwykłe logowanie hasłem nie wysyła e-maili.
+
+### Weryfikacja chmury
+
+`npm test` obejmuje merge, konflikty, cofnięcia, odtwarzanie kolejki offline, izolację cache kont, niedostępny zapis i edycję podczas synchronizacji. `node scripts/verify-cloud.mjs` tworzy dwa tymczasowe konta i sprawdza prawdziwe RLS, logowanie, dostęp anonimowy oraz równoczesne zapisy. Po testach uruchom `node scripts/verify-cloud.mjs --cleanup`; nie publikuj pliku `output/.cloud-test-users.json`. Skrypt wymaga zalogowanego CLI Supabase i jest przeznaczony dla właściciela projektu.
