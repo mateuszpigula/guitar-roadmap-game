@@ -2,3 +2,5 @@ output/
 node_modules/
 .env*
 .git/
+supabase/.temp/
+supabase/.branches/
