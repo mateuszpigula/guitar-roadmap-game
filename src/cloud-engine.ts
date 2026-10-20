@@ -22,8 +22,25 @@ export class CloudEngine {
   }
   load(){return this.run(async()=>{const c=await this.cache.read();this.emit({state:c.current,status:'pending'});});}
   private async write(c:CloudCache){this.unsaved=c;await this.cache.write(c);this.unsaved=undefined;}
-  change(fn:(s:AppState)=>AppState){
-    return this.run(async()=>{if(this.choice)throw new Error('Najpierw wybierz wersję zmian poniżej.');const c=this.unsaved??await this.cache.read();const next=parseBackup(JSON.stringify(fn(c.current)));this.emit({state:next,status:'pending',error:''});await this.write({...c,current:next});});
+  change(fn:(s:AppState)=>AppState,expected?:AppState){
+    return this.run(async()=>{
+      if(this.choice){
+        if(!expected)throw new Error('Najpierw wybierz wersję zmian poniżej.');
+        const desired=parseBackup(JSON.stringify(fn(expected)));
+        this.choice.local=mergeProgress(expected,desired,this.choice.local).state;
+        await this.write({version:1,base:this.choice.base,current:this.choice.local});
+        this.emit({state:this.choice.local,status:'conflict'});return;
+      }
+      const c=this.unsaved??await this.cache.read();
+      const desired=parseBackup(JSON.stringify(fn(expected??c.current)));
+      const merged=expected?mergeProgress(expected,desired,c.current):{state:desired,conflicts:[]};
+      if(merged.conflicts.length&&expected){
+        await this.write({version:1,base:expected,current:desired});
+        this.choice={base:expected,local:desired,remote:c.current};
+        this.emit({state:desired,status:'conflict',conflicts:merged.conflicts,error:''});return;
+      }
+      this.emit({state:merged.state,status:'pending',error:''});await this.write({...c,current:merged.state});
+    });
   }
   sync(){return this.run(async()=>{
     if(this.choice)return;
@@ -48,6 +65,7 @@ export class CloudEngine {
   });}
   resolve(prefer:'local'|'remote'){return this.run(async()=>{if(!this.choice)return;const {base,local,remote}=this.choice;const state=mergeProgress(base,local,remote,prefer).state;await this.write({version:1,base:remote,current:state});this.choice=undefined;this.emit({state,status:'pending',conflicts:[],error:''});});}
   getConflict(){return this.choice;}
+  hasUnsaved(){return this.unsaved!==undefined;}
   hasPending(){return ['pending','syncing','offline','conflict','error'].includes(this.view.status);}
   async flush(){await this.queue;}
 }

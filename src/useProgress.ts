@@ -12,6 +12,7 @@ export function useProgress(){
   const [view,setView]=useState<SyncView>({state:null,status:'loading',error:'',conflicts:[]});
   const [generation,setGeneration]=useState(0);
   const engine=useRef<CloudEngine|null>(null),guest=useRef<ReturnType<typeof createRepository>|null>(null),current=useRef<AppState|null>(null),guestBlocked=useRef(false),pending=useRef(Promise.resolve());
+  const localEdits=useRef(0);
   const viewRef=useRef(view);viewRef.current=view;
   useEffect(()=>{
     if(!cloud)return;
@@ -23,8 +24,8 @@ export function useProgress(){
   useEffect(()=>{
     if(!authReady)return;
     let live=true;
-    setView({state:null,status:'loading',error:'',conflicts:[]});current.current=null;
-    const publish=(v:SyncView)=>{if(live){current.current=v.state;setView(v);}};
+    setView({state:null,status:'loading',error:'',conflicts:[]});current.current=null;localEdits.current=0;
+    const publish=(v:SyncView)=>{if(live){const next=localEdits.current>0?{...v,state:current.current,status:v.status==='error'||v.status==='conflict'?v.status:'pending' as const}:v;current.current=next.state;setView(next);}};
     if(user&&cloud){
       const client=cloud,id=user.id;
       const controller=new CloudEngine(id,{
@@ -46,7 +47,17 @@ export function useProgress(){
   useEffect(()=>{if(!user||view.status!=='pending')return;const timer=window.setTimeout(()=>void engine.current?.sync(),700);return()=>clearTimeout(timer);},[user?.id,view]);
   useEffect(()=>{const warn=(e:BeforeUnloadEvent)=>{if(viewRef.current.status==='error'||viewRef.current.status==='pending'){e.preventDefault();}};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);},[]);
   const update=useCallback((fn:(s:AppState)=>AppState)=>{
-    if(engine.current){void engine.current.change(fn);return;}
+    if(engine.current){
+      const controller=engine.current,before=current.current;
+      if(!before||controller.getConflict())return;
+      const next=fn(before);current.current=next;localEdits.current++;
+      setView(v=>({...v,state:next,status:'pending'}));
+      void controller.change(()=>next,before).finally(()=>{
+        if(engine.current!==controller)return;
+        localEdits.current--;
+        if(localEdits.current===0){current.current=controller.view.state;setView(controller.view);}
+      });return;
+    }
     if(!current.current)return;
     const state=fn(current.current);current.current=state;
     setView(v=>({...v,state,status:guestBlocked.current?'error':'pending'}));
