@@ -2,3 +2,31 @@
 
 /* Functional labels keep readable contrast on every paper surface. */
 .atlas-heading,.atlas-footer,.map-point-label,.map-point small{background:#eeeadd}.hero-art .guitar-art{overflow:visible}.avatar[role=img]{user-select:none}.eyebrow,.section-label{font-size:10px}.map-point small{font-size:8px}.map-point-label{font-size:12px}.lesson-row small{font-size:11px}.sidebar-caption{font-size:10px}.hero-kicker{font-size:10px}@media(max-width:700px){.eyebrow,.section-label,.hero-kicker{font-size:9px}.map-point-label{font-size:10px}.map-point small{font-size:7px}.brand small{font-size:7px}.hero-kicker{white-space:normal}.map-point{width:88px}}
+
+/* Short, purposeful motion: arrival, exploration and a completed practice step. */
+.page-transition{animation:page-arrive 360ms cubic-bezier(.2,.7,.3,1) both}
+.primary,.secondary,.icon-button,.sidebar nav button,.lesson-row,.song-row{transition:background-color 160ms ease,box-shadow 160ms ease,transform 160ms ease}
+.primary:active:not(:disabled),.secondary:active:not(:disabled),.icon-button:active{transform:scale(.97)}
+.primary svg,.lesson-row>svg,.workshop-link svg{transition:transform 180ms ease}
+.primary:hover:not(:disabled) svg,.lesson-row:hover>svg{transform:translateX(3px)}
+.map-point .node{transition:transform 220ms cubic-bezier(.2,.8,.3,1),background-color 220ms ease,outline-color 220ms ease,box-shadow 220ms ease}
+.map-point:hover .node,.map-point:focus-visible .node{transform:translateY(-4px);box-shadow:0 6px 12px #30352f18}
+.map-point.selected .node{animation:node-arrive 420ms ease-out}
+.map-point.current .node{box-shadow:0 0 0 7px #ae592512}
+.lesson-row.next .lesson-state{animation:node-arrive 420ms ease-out}
+.progress-bar>span,.progress-track>span{transition:width 400ms ease}
+.xp-badge{animation:xp-arrive 400ms ease-out}
+.completion{position:relative}
+.completion.celebrating{animation:completion-glow 1.8s ease-out}
+.completion.celebrating h2 svg{animation:node-arrive 500ms cubic-bezier(.2,.8,.3,1)}
+.completion-reward{display:flex;align-items:center;gap:8px;background:#f2dfb6;color:#66461d;padding:12px 14px;border-radius:6px;margin-bottom:18px;font-size:13px;font-weight:600;animation:reward-arrive 400ms ease-out both}
+.completion-reward>span{font-size:22px;animation:reward-turn 600ms ease-out}
+.quiz-feedback{animation:page-arrive 220ms ease-out}
+@keyframes page-arrive{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes node-arrive{0%{transform:scale(.9)}65%{transform:scale(1.08)}100%{transform:scale(1)}}
+@keyframes xp-arrive{0%{transform:scale(.94)}55%{transform:scale(1.09)}100%{transform:scale(1)}}
+@keyframes completion-glow{0%,100%{box-shadow:0 0 0 0 transparent}25%{box-shadow:0 0 0 5px #e9b86b55}}
+@keyframes reward-arrive{from{opacity:0;transform:translateY(6px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes reward-turn{from{transform:rotate(-65deg) scale(.5)}to{transform:rotate(0) scale(1)}}
+.reduce-motion *,.reduce-motion *::before,.reduce-motion *::after{animation:none!important;transition:none!important}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
