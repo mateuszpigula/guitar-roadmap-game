@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, expect, it } from 'vitest';
 import { SongChallenge } from './SongChallenge';
-import { lessonById } from '../data/curriculum';
+import { lessonById } from '../content/catalog';
 import { freshState, progressFor, setStatus } from '../state';
 import type { AppState } from '../types';
 afterEach(cleanup);

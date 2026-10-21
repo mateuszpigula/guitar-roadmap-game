@@ -1,6 +1,6 @@
 import { Check, Music2 } from 'lucide-react';
 import type { AppState, Lesson } from '../types';
-import { songById } from '../data/repertoire';
+import { songById } from '../content/catalog';
 import { progressFor } from '../state';
 import { SongPractice } from './SongPractice';
 

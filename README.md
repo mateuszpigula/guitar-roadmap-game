@@ -91,3 +91,40 @@ Lokalny podgląd widgetu: `VITE_TURNSTILE_SITE_KEY=1x00000000000000000000AA npm 
 ### Testy synchronizacji
 
 `npm test` obejmuje merge, konflikty, cofnięcia, odtwarzanie kolejki offline, izolację cache kont, niedostępny zapis i edycję podczas synchronizacji. `node scripts/verify-cloud.mjs` tworzy dwa tymczasowe konta i sprawdza prawdziwe RLS, logowanie, dostęp anonimowy oraz równoczesne zapisy. Po testach uruchom `node scripts/verify-cloud.mjs --cleanup`; nie publikuj pliku `output/.cloud-test-users.json`. Skrypt wymaga zalogowanego CLI Supabase i jest przeznaczony dla właściciela projektu.
+
+## Program nauki w Supabase i edytor
+
+Opublikowany program jest przechowywany w `public.curriculum_releases` jako kompletna, niezmienna wersja JSON: rozdziały, lekcje, repertuar i źródła. Jedna publikacja zmienia cały program atomowo. Postęp pozostaje osobno w `guitar_progress`; jego format i dane nie są przepisywane przez publikowanie.
+
+- `curriculum_editors`: uprawnienia redakcyjne, nadawane przez administratora bazy. Zwykłe konto nie może nadać sobie tej roli.
+- `curriculum_draft`: jeden wspólny szkic z numerem rewizji, zabezpieczony przed równoczesnym nadpisaniem.
+- `start_curriculum_draft`, `save_curriculum_draft`, `publish_curriculum_draft`: operacje sprawdzające uprawnienia po stronie bazy. Aplikacja używa wyłącznie publicznego klucza i sesji użytkownika.
+- `src/content/schema.json`: schemat opublikowanej treści, sprawdzany przez Ajv w aplikacji oraz pg_jsonschema w PostgreSQL. Szkic może zawierać puste pola tekstowe; publikacja wymaga pełnej treści. Semantyczna walidacja dodatkowo sprawdza graf wymagań, odnośniki między rekordami i zgodność z historią.
+
+### Edytowanie
+
+Zaloguj się na konto właściciela i wybierz **Edytor programu** (na telefonie: **Twoje postępy → Otwórz edytor programu**). Bezpośredni adres: `/#editor`.
+
+1. Utwórz szkic lub otwórz istniejący. Wybierz lekcje, utwory, rozdziały albo źródła.
+2. Edytuj pola, dodawaj nowe elementy, zmieniaj kolejność i wymagania. Nieopublikowany element można usunąć ze szkicu. Nowy rozdział wymaga przynajmniej jednego zadania głównego.
+3. Zapisz szkic. Nie ma automatycznego zapisu formularza; przy opuszczaniu niezapisanych zmian aplikacja ostrzega. Kopię szkicu można pobrać jako JSON.
+4. Otwórz podgląd, sprawdź kryteria i materiały. Walidacja adresów nie zastępuje obejrzenia filmu.
+5. Wybierz **Sprawdź i opublikuj**, przeczytaj podsumowanie, a następnie potwierdź publikację.
+
+Program jest odświeżany przy ponownym otwarciu aplikacji. Nowa publikacja nie podmienia treści w trakcie ćwiczenia. W zakładce postępu można sprawdzić dostępność aktualizacji. Każda opublikowana wersja pozostaje w historii bazy (panel pokazuje ostatnie 20).
+
+Opublikowanych identyfikatorów nie usuwamy ani nie zmieniamy ich rozdziału, rodzaju lub wartości XP. Historyczne opcje scen również pozostają dostępne. Przy całkowicie nowej umiejętności dodaj nowe zadanie. Zmiana opisu istniejącego zadania zachowuje zaliczenie; nie oznacza ponownej oceny umiejętności ucznia.
+
+### Offline i zgodność wersji
+
+Aplikacja przed otwarciem postępu pobiera najnowszą poprawną wersję i zapisuje ją w osobnej bazie IndexedDB `guitar-quest-curriculum`. Jeśli sieć jest niedostępna, korzysta z zapisanej kopii; przy pierwszym uruchomieniu bez kopii ma program v2 dołączony do aplikacji. Brak możliwości zapisu offline jest komunikowany. Pliki aplikacji buforuje service worker; żądania Supabase nie są buforowane przez service worker.
+
+Postęp z nowszej wersji programu zachowuje nieznane starszemu urządzeniu zadania i utwory. Ekran prosi wtedy o aktualizację; lokalnie nieznane lekcje nie są jeszcze wliczane do wyświetlanego XP. Import, eksport i synchronizacja nie usuwają tych rekordów. Przy pierwszym wdrożeniu tej funkcji należy odświeżyć starsze, otwarte karty aplikacji.
+
+### Migracje i weryfikacja
+
+Migracje są w `supabase/migrations`. Zastosowane migracje są niezmienne; kolejne poprawki dodajemy jako nowe pliki. Migracje z 21 października 2026 zastosowano przez zalogowany SQL Editor i zapisano w `supabase_migrations.schema_migrations`, ponieważ CLI nie miało aktywnego uwierzytelnienia. Tabela historii również ma RLS; nie jest udostępniona klientom aplikacji.
+
+Po zalogowaniu CLI i podłączeniu właściwego projektu standardowy workflow to `supabase migration new`, testy i `supabase db push`. Nie uruchamiaj ponownie zastosowanych plików ręcznie. Zmiana treści programu odbywa się w edytorze; nie wymaga migracji SQL ani deployu frontendu.
+
+`supabase/tests/curriculum.sql` sprawdza rzeczywiste role i RPC w transakcji zakończonej `ROLLBACK`: odczyt publiczny, brak uprawnień gościa i zwykłego konta, dostęp edytora, konflikty rewizji, niedozwolone adresy, pętle, zachowanie XP i atomową publikację. Wymaga uruchomienia przez administratora bazy oraz przynajmniej jednego wpisu w `curriculum_editors`. `npm test` obejmuje także cache, kompatybilność kopii i formularz redakcyjny.

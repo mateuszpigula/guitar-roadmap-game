@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { coreLessons, lessons, lessonById } from './data/curriculum';
-import { songs, songById } from './data/repertoire';
+import { coreLessons, lessons, lessonById } from './content/catalog';
+import { songs, songById } from './content/catalog';
 import { freshState, progressFor, setStatus, parseBackup, isAvailable, nextLesson, xp } from './state';
 import { mergeProgress } from './sync';
 const now=new Date('2026-10-21T12:00:00.000Z');

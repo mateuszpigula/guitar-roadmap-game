@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { BpmInput } from './BpmInput';
 import { ArrowLeft, Check, CheckCircle2, ExternalLink, LockKeyhole, Flag, ArrowRight, RotateCcw, BookOpen, Lightbulb } from 'lucide-react';
 import type { AppState, Lesson, Progress } from '../types';
-import { chapters, lessonById, sources, coreLessons } from '../data/curriculum';
+import { chapters, lessonById, sources, coreLessons } from '../content/catalog';
 import { isAvailable, progressFor, review, setStatus } from '../state';
 import { SongChallenge } from './SongChallenge';
 import { PracticeTimer } from './Tools';

@@ -1,7 +1,7 @@
 import type { AppState, Progress, Status, Lesson } from './types';
-import { lessons, coreLessons, lessonById } from './data/curriculum';
-import { songs } from './data/repertoire';
-export const freshState = (): AppState => ({version:1,curriculumVersion:2,progress:{},sessions:[],songs:{},settings:{reducedMotion:false,sessionMinutes:18}});
+import { lessons, coreLessons, lessonById, curriculumVersion } from './content/catalog';
+import { songs } from './content/catalog';
+export const freshState = (): AppState => ({version:1,curriculumVersion,progress:{},sessions:[],songs:{},settings:{reducedMotion:false,sessionMinutes:18}});
 export const emptyProgress=():Progress=>({status:'todo',reviewStep:0,notes:'',bpm:60,unlocked:false});
 export const progressFor=(s:AppState,id:string):Progress=>s.progress[id]??emptyProgress();
 export const isAvailable=(s:AppState,l:Lesson)=>progressFor(s,l.id).unlocked||progressFor(s,l.id).status!=='todo'||l.prerequisites.every(id=>progressFor(s,id).status==='done');
@@ -34,19 +34,21 @@ const validDate=(v:unknown)=>typeof v==='string'&&/^\d{4}-\d{2}-\d{2}T/.test(v)&
 export function parseBackup(input:string):AppState {
  if(input.length>5_000_000)throw new Error('Plik jest zbyt duży (maks. 5 MB).');
  let v:unknown;try{v=JSON.parse(input);}catch{throw new Error('To nie jest poprawny plik JSON.');}
- if(!object(v)||v.version!==1||(v.curriculumVersion!==1&&v.curriculumVersion!==2))throw new Error('Nieobsługiwana wersja kopii Guitar Quest.');
+ if(!object(v)||v.version!==1||(!Number.isSafeInteger(v.curriculumVersion)||Number(v.curriculumVersion)<1))throw new Error('Nieobsługiwana wersja kopii Guitar Quest.');
  if(!object(v.progress)||!object(v.songs)||!Array.isArray(v.sessions)||!object(v.settings))throw new Error('Kopia nie zawiera kompletnego postępu.');
  if(typeof v.settings.reducedMotion!=='boolean'||![15,18,20].includes(Number(v.settings.sessionMinutes))||typeof v.settings.sessionMinutes!=='number')throw new Error('Nieprawidłowe ustawienia sesji.');
- const out=freshState();out.settings={reducedMotion:v.settings.reducedMotion,sessionMinutes:v.settings.sessionMinutes as 15|18|20};
+ const newer=Number(v.curriculumVersion)>curriculumVersion;
+ const validId=(id:string)=>/^[a-z][a-z0-9-]{0,79}$/.test(id)&&!['constructor','prototype'].includes(id);
+ const out=freshState();out.curriculumVersion=Math.max(curriculumVersion,Number(v.curriculumVersion));out.settings={reducedMotion:v.settings.reducedMotion,sessionMinutes:v.settings.sessionMinutes as 15|18|20};
  for(const [id,p] of Object.entries(v.progress)){
-  if(!Object.hasOwn(lessonById,id)||!object(p)||!validStatus(p.status)||!validText(p.notes)||!validBpm(p.bpm)||typeof p.unlocked!=='boolean'||!Number.isInteger(p.reviewStep)||Number(p.reviewStep)<0||Number(p.reviewStep)>3)throw new Error('Nieprawidłowe dane zadania.');
+  if((!Object.hasOwn(lessonById,id)&&!newer)||!validId(id)||!object(p)||!validStatus(p.status)||!validText(p.notes)||!validBpm(p.bpm)||typeof p.unlocked!=='boolean'||!Number.isInteger(p.reviewStep)||Number(p.reviewStep)<0||Number(p.reviewStep)>3)throw new Error('Nieprawidłowe dane zadania.');
   if((p.status==='done'&&(!validDate(p.completedAt)||!validDate(p.due)))||(p.status!=='done'&&(p.completedAt!==undefined||p.due!==undefined)))throw new Error('Nieprawidłowe terminy powtórek.');
-  if(p.selectedSongId!==undefined&&(typeof p.selectedSongId!=='string'||!lessonById[id].songChoices?.includes(p.selectedSongId)))throw new Error('Nieprawidłowy wybór utworu.');
-  if(lessonById[id].songChoices&&p.status==='done'&&!p.selectedSongId)throw new Error('Zaliczona scena nie ma wybranego utworu.');
+  if(p.selectedSongId!==undefined&&(typeof p.selectedSongId!=='string'||!validId(p.selectedSongId)||(!newer&&!lessonById[id]?.songChoices?.includes(p.selectedSongId))))throw new Error('Nieprawidłowy wybór utworu.');
+  if(lessonById[id]?.songChoices&&p.status==='done'&&!p.selectedSongId)throw new Error('Zaliczona scena nie ma wybranego utworu.');
   out.progress[id]={...(p.selectedSongId?{selectedSongId:p.selectedSongId as string}:{}),status:p.status as Status,notes:p.notes as string,bpm:p.bpm as number,unlocked:p.unlocked,reviewStep:p.reviewStep as number,...(p.status==='done'?{completedAt:p.completedAt as string,due:p.due as string}:{})};
  }
  for(const [id,p] of Object.entries(v.songs)){
-  if(!songs.some(song=>song.id===id)||!object(p)||!validStatus(p.status)||!validText(p.notes)||!validBpm(p.bpm))throw new Error('Nieprawidłowy repertuar.');
+  if((!songs.some(song=>song.id===id)&&!newer)||!validId(id)||!object(p)||!validStatus(p.status)||!validText(p.notes)||!validBpm(p.bpm))throw new Error('Nieprawidłowy repertuar.');
   out.songs[id]={status:p.status as Status,notes:p.notes as string,bpm:p.bpm as number};
  }
  const ids=new Set<string>();

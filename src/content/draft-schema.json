@@ -1,0 +1,366 @@
+{
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "chapters": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 30
+          },
+          "title": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 20000
+          },
+          "subtitle": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 20000
+          },
+          "region": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 20000
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "subtitle",
+          "region"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 1,
+      "maxItems": 30
+    },
+    "lessons": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{0,79}$"
+          },
+          "chapter": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000000
+          },
+          "order": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000000
+          },
+          "title": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 20000
+          },
+          "category": {
+            "enum": [
+              "Technika",
+              "Rytm",
+              "Teoria",
+              "Słuch",
+              "Repertuar",
+              "Improwizacja"
+            ]
+          },
+          "theory": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 20000
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 20000
+            },
+            "minItems": 1,
+            "maxItems": 5000
+          },
+          "example": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 20000
+          },
+          "criteria": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 20000
+            },
+            "minItems": 1,
+            "maxItems": 5000
+          },
+          "mistake": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 20000
+          },
+          "source": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{0,79}$"
+          },
+          "prerequisites": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]{0,79}$"
+            },
+            "minItems": 0,
+            "maxItems": 5000,
+            "uniqueItems": true
+          },
+          "optional": {
+            "type": "boolean"
+          },
+          "challenge": {
+            "type": "boolean"
+          },
+          "minutes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 180
+          },
+          "sessions": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000000
+            },
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "branch": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 20000
+          },
+          "songChoices": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]{0,79}$"
+            },
+            "minItems": 1,
+            "maxItems": 10,
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "id",
+          "chapter",
+          "order",
+          "title",
+          "category",
+          "theory",
+          "steps",
+          "example",
+          "criteria",
+          "mistake",
+          "source",
+          "prerequisites",
+          "optional",
+          "challenge",
+          "minutes"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 1,
+      "maxItems": 5000
+    },
+    "songs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{0,79}$"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 20000
+          },
+          "artist": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 20000
+          },
+          "kind": {
+            "enum": [
+              "Piosenka",
+              "Riff",
+              "Aranżacja"
+            ]
+          },
+          "chapter": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000000
+          },
+          "version": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 20000
+          },
+          "requirements": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]{0,79}$"
+            },
+            "minItems": 0,
+            "maxItems": 5000,
+            "uniqueItems": true
+          },
+          "example": {
+            "type": "string",
+            "maxLength": 20000
+          },
+          "url": {
+            "type": "string",
+            "pattern": "^https://[^\\s]+$",
+            "maxLength": 2000
+          },
+          "lesson": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{0,79}$"
+          },
+          "teacher": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 20000
+          },
+          "language": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 20000
+          },
+          "practice": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 20000
+            },
+            "minItems": 1,
+            "maxItems": 5000
+          },
+          "criteria": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 20000
+            },
+            "minItems": 1,
+            "maxItems": 5000
+          },
+          "nylon": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 20000
+          },
+          "sessions": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000000
+            },
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "checkpoint": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000000
+          },
+          "extraUrl": {
+            "type": "string",
+            "pattern": "^https://[^\\s]+$",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "artist",
+          "kind",
+          "chapter",
+          "version",
+          "requirements",
+          "example"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 0,
+      "maxItems": 5000
+    },
+    "sources": {
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 5000,
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]{0,79}$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 20000
+          },
+          "url": {
+            "type": "string",
+            "pattern": "^https://[^\\s]+$",
+            "maxLength": 2000
+          },
+          "language": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 20000
+          },
+          "access": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 20000
+          }
+        },
+        "required": [
+          "title",
+          "url",
+          "language",
+          "access"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "chapters",
+    "lessons",
+    "songs",
+    "sources"
+  ],
+  "additionalProperties": false
+}

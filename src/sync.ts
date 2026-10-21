@@ -6,6 +6,7 @@ export interface MergeResult { state: AppState; conflicts: string[] }
 /** Three-way merge. Status and review dates form one indivisible unit. */
 export function mergeProgress(base: AppState, local: AppState, remote: AppState, prefer: 'local'|'remote' = 'local'): MergeResult {
   const out = freshState(), conflicts: string[] = [];
+  out.curriculumVersion=Math.max(out.curriculumVersion,base.curriculumVersion,local.curriculumVersion,remote.curriculumVersion);
   function choose<T>(b:T,l:T,r:T,path:string):T {
     if(equal(l,b))return r;
     if(equal(r,b)||equal(l,r))return l;
