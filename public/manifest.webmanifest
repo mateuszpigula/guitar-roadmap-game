@@ -1,0 +1,20 @@
+{
+  "id": "/",
+  "name": "Guitar Quest — nauka gitary",
+  "short_name": "Guitar Quest",
+  "description": "Twoja muzyczna podróż: lekcje gitary klasycznej, repertuar i codzienne ćwiczenia.",
+  "lang": "pl",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f8f6f0",
+  "theme_color": "#f8f6f0",
+  "categories": ["education", "music"],
+  "prefer_related_applications": false,
+  "icons": [
+    {"src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}
