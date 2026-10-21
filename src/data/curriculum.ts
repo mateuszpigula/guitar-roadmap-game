@@ -1,6 +1,8 @@
 import type { Chapter, Lesson, Category } from '../types';
-export const curriculumVersion = 1;
+import { expandCurriculum, expansionSources } from './expansion';
+export const curriculumVersion = 2;
 export const sources: Record<string, {title: string; url: string; language: string; access: string}> = {
+ ...expansionSources,
  classical: {title: 'This is Classical Guitar · program i lekcje',url:'https://www.thisisclassicalguitar.com/curriculum/',language:'EN',access:'Bezpłatne filmy; część książek płatna'},
  technique: {title: 'This is Classical Guitar · biblioteka lekcji',url:'https://www.thisisclassicalguitar.com/lessons/',language:'EN',access:'Bezpłatne materiały; opcjonalne książki płatne'},
  beginner: {title:'JustinGuitar · podstawy, rytm i pierwsze utwory',url:'https://www.justinguitar.com/classes/beginner-guitar-course-grade-two',language:'EN',access:'Bezpłatne lekcje na stronie'},
@@ -153,7 +155,8 @@ function build(row: typeof extras[number], chapter: number, order: number, optio
  const prerequisites = optional ? [`ch-${String(chapter).padStart(2,'0')}-${order===1?2:5}`] : order>1 ? [`ch-${String(chapter).padStart(2,'0')}-${order-1}`] : chapter>1 ? [`ch-${String(chapter-1).padStart(2,'0')}-8`] : [];
  return {id,chapter,order,title,category,theory,steps:steps.split('|'),example,criteria:criteria.split('|'),mistake,source,prerequisites,optional,challenge:!optional&&order===8,minutes:order===8?7:5};
 }
-export const lessons: Lesson[] = core.flatMap((rows,c)=>rows.map((r,i)=>build(r,c+1,i+1))).concat(extras.map((r,i)=>build(r,Math.floor(i/2)+1,i%2+1,true)));
+const originalLessons: Lesson[] = core.flatMap((rows,c)=>rows.map((r,i)=>build(r,c+1,i+1))).concat(extras.map((r,i)=>build(r,Math.floor(i/2)+1,i%2+1,true)));
+export const lessons=expandCurriculum(originalLessons);
 export const coreLessons=lessons.filter(l=>!l.optional);
 export const lessonById=Object.fromEntries(lessons.map(l=>[l.id,l]));
 

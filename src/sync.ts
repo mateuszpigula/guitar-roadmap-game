@@ -13,7 +13,7 @@ export function mergeProgress(base: AppState, local: AppState, remote: AppState,
   }
   for(const id of new Set([...Object.keys(base.progress),...Object.keys(local.progress),...Object.keys(remote.progress)])) {
     const b=base.progress[id]??emptyProgress(),l=local.progress[id]??emptyProgress(),r=remote.progress[id]??emptyProgress();
-    const unit=(p:typeof b)=>({status:p.status,reviewStep:p.reviewStep,...(p.completedAt?{completedAt:p.completedAt}:{}),...(p.due?{due:p.due}:{})});
+    const unit=(p:typeof b)=>({status:p.status,reviewStep:p.reviewStep,...(p.selectedSongId?{selectedSongId:p.selectedSongId}:{}),...(p.completedAt?{completedAt:p.completedAt}:{}),...(p.due?{due:p.due}:{})});
     out.progress[id]={...choose(unit(b),unit(l),unit(r),`progress.${id}.status`),notes:choose(b.notes,l.notes,r.notes,`progress.${id}.notes`),bpm:choose(b.bpm,l.bpm,r.bpm,`progress.${id}.bpm`),unlocked:choose(b.unlocked,l.unlocked,r.unlocked,`progress.${id}.unlocked`)};
   }
   for(const id of new Set([...Object.keys(base.songs),...Object.keys(local.songs),...Object.keys(remote.songs)])) {

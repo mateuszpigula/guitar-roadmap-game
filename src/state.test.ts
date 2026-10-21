@@ -6,14 +6,14 @@ import { createRepository } from './storage';
 import { songs } from './data/repertoire';
 const start=new Date('2026-10-20T10:00:00.000Z');
 describe('curriculum integrity',()=>{
- it('has 80 complete core lessons, 20 side quests and 10 meaningful challenges',()=>{
-  expect(coreLessons).toHaveLength(80);expect(lessons.filter(l=>l.optional)).toHaveLength(20);expect(lessons.filter(l=>l.challenge)).toHaveLength(10);expect(new Set(lessons.map(l=>l.id)).size).toBe(100);
-  for(const c of chapters){expect(coreLessons.filter(l=>l.chapter===c.id)).toHaveLength(8);}
+ it('has 150 complete core lessons, 50 side quests and 20 meaningful challenges',()=>{
+  expect(coreLessons).toHaveLength(150);expect(lessons.filter(l=>l.optional)).toHaveLength(50);expect(lessons.filter(l=>l.challenge)).toHaveLength(20);expect(new Set(lessons.map(l=>l.id)).size).toBe(200);
+  for(const c of chapters){expect(coreLessons.filter(l=>l.chapter===c.id)).toHaveLength(15);}
   for(const l of lessons){expect(l.theory.trim().length).toBeGreaterThan(30);expect(l.steps.length).toBeGreaterThanOrEqual(3);expect(l.example.length).toBeGreaterThan(10);expect(l.criteria.length).toBeGreaterThan(0);expect(l.mistake.length).toBeGreaterThan(15);expect(sources[l.source]?.url).toMatch(/^https:\/\//);}
  });
  it('has an acyclic dependency graph with no missing lesson',()=>{
   const visiting=new Set<string>(),visited=new Set<string>();function visit(id:string){expect(lessonById[id]).toBeDefined();if(visited.has(id))return;expect(visiting.has(id),id).toBe(false);visiting.add(id);lessonById[id].prerequisites.forEach(visit);visiting.delete(id);visited.add(id);}
-  lessons.forEach(l=>visit(l.id));expect(visited.size).toBe(100);
+  lessons.forEach(l=>visit(l.id));expect(visited.size).toBe(200);
  });
  it('all repertoire skills and exercises exist',()=>{for(const song of songs){song.requirements.forEach(id=>expect(lessonById[id]).toBeDefined());if(song.lesson)expect(lessonById[song.lesson]).toBeDefined();}});
 });
@@ -22,7 +22,7 @@ describe('progress and XP',()=>{
  it('blocks direct completion of a locked task',()=>{expect(()=>setStatus(freshState(),'ch-10-8','done')).toThrow('odblokuj');});
  it('manual unlock does not complete prerequisites',()=>{let s=freshState();s.progress['ch-05-1']={...progressFor(s,'ch-05-1'),unlocked:true};expect(isAvailable(s,lessonById['ch-05-1'])).toBe(true);expect(xp(s)).toBe(0);s=setStatus(s,'ch-05-1','done',start);expect(xp(s)).toBe(10);expect(progressFor(s,'ch-04-8').status).toBe('todo');});
  it('subtracts reverted XP without destroying later history, and does not duplicate on redo',()=>{let s=setStatus(freshState(),'ch-01-1','done',start);s=setStatus(s,'ch-01-2','done',start);s=setStatus(s,'ch-01-1','practicing',start);expect(xp(s)).toBe(10);expect(progressFor(s,'ch-01-2').status).toBe('done');expect(progressFor(s,'ch-01-1').due).toBeUndefined();s=setStatus(s,'ch-01-1','done',start);expect(xp(s)).toBe(20);});
- it('earns 100 XP for a complete chapter, 120 with both side quests',()=>{let s=freshState();coreLessons.slice(0,8).forEach(l=>{s=setStatus(s,l.id,'done',start);});expect(xp(s)).toBe(100);lessons.filter(l=>l.chapter===1&&l.optional).forEach(l=>{s=setStatus(s,l.id,'done',start);});expect(xp(s)).toBe(120);expect(nextLesson(s)?.chapter).toBe(2);});
+ it('earns 190 XP for a chapter including its repertoire scene, 240 with side quests',()=>{let s=freshState();coreLessons.filter(l=>l.chapter===1).forEach(l=>{if(l.songChoices){const id=l.songChoices[0];s.progress[l.id]={...progressFor(s,l.id),selectedSongId:id};s.songs[id]={status:'done',notes:'Wykonane w dwóch sesjach',bpm:60};}s=setStatus(s,l.id,'done',start);});expect(xp(s)).toBe(190);lessons.filter(l=>l.chapter===1&&l.optional).forEach(l=>{s=setStatus(s,l.id,'done',start);});expect(xp(s)).toBe(240);expect(nextLesson(s)?.chapter).toBe(2);});
 });
 describe('spaced review',()=>{
  it('schedules 1, 3, 7, 14 days and caps further intervals at 14',()=>{let s=setStatus(freshState(),'ch-01-1','done',start);expect(s.progress['ch-01-1'].due).toBe(plusDays(start,1));for(const n of [3,7,14,14]){s=review(s,'ch-01-1',true,start);expect(s.progress['ch-01-1'].due).toBe(plusDays(start,n));}expect(xp(s)).toBe(10);});

@@ -1,4 +1,5 @@
-export const songs = [
+import type { Song } from '../types';
+const legacySongs: Song[] = [
  {id:'song-01',title:'Pierwsze światło',artist:'Guitar Quest · ćwiczenie autorskie',kind:'Riff',chapter:1,version:'Jedna struna, ćwierćnuty · 2 takty',requirements:['ch-01-5','ch-01-6'],example:'Struna 1: | 0 1 3 1 | 0 3 1 0 | · 60 BPM',lesson:'ch-01-8'},
  {id:'song-02',title:'Wieczorny szlak',artist:'Guitar Quest · akompaniament autorski',kind:'Piosenka',chapter:2,version:'Akordy otwarte · 8 taktów',requirements:['ch-02-4','ch-02-6'],example:'| Em | Am | Em | Am | C | G | Am | Em | · po 4 ćwierćnuty',lesson:'ch-02-8'},
  {id:'song-03',title:'Powrót do E',artist:'Guitar Quest · riff autorski',kind:'Riff',chapter:3,version:'Dwie struny, równe ćwierćnuty',requirements:['ch-03-3'],example:'6:0,3 → 5:0,2 | 5:2,0 → 6:3,0',lesson:'ch-03-4'},
@@ -10,3 +11,7 @@ export const songs = [
  {id:'song-10',title:'Stand By Me',artist:'Ben E. King',kind:'Piosenka',chapter:3,version:'Łatwa wersja G–Em–C–D · lekcja JustinGuitar',requirements:['ch-02-4','ch-02-6'],url:'https://www.youtube.com/watch?v=KlHFye6_Icc',example:'Najpierw przećwicz pary G–Em i C–D. Pełny układ i rytm poznasz w podlinkowanej lekcji.'},
  {id:'song-08',title:'Twój własny temat',artist:'Kompozycja własna',kind:'Aranżacja',chapter:10,version:'16 taktów · wybrana tonacja',requirements:['ch-09-8'],example:'Zapisz w notatce akordy, melodię i formę. Wykorzystaj motyw, wariację oraz kontrastową odpowiedź.',lesson:'ch-10-5'},
 ];
+
+import { repertoirePath } from './song-path';
+export const songs: Song[] = [...repertoirePath, ...legacySongs.filter(s=>!repertoirePath.some(r=>r.id===s.id))];
+export const songById=Object.fromEntries(songs.map(s=>[s.id,s]));
