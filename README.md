@@ -75,6 +75,19 @@ Publiczne zmienne klienta (w `.env.local` i Vercelu):
 
 Wysyłka potwierdzeń/resetu korzysta obecnie z domyślnej poczty Supabase: jest ograniczona do adresów członków organizacji i ma niski limit. Dla prywatnego właściciela użyj adresu swojego konta Supabase. Przed udostępnianiem aplikacji innym osobom skonfiguruj własny SMTP: https://supabase.com/docs/guides/auth/auth-smtp. Zwykłe logowanie hasłem nie wysyła e-maili.
 
-### Weryfikacja chmury
+### Cloudflare Turnstile
+
+Formularze obsługują Cloudflare Turnstile. Konfiguracja środowiska wymaga publicznego klucza widgetu i włączenia CAPTCHA w Supabase. Sama obecność widgetu nie zabezpiecza API.
+
+1. Utwórz widget Turnstile (Managed) dla `guitar-roadmap-game.vercel.app`. Dla pracy lokalnej dodaj osobno `localhost` i `127.0.0.1` lub użyj osobnego widgetu deweloperskiego.
+2. Publiczny Site Key ustaw jako `VITE_TURNSTILE_SITE_KEY` w `.env.local` oraz w środowisku Production na Vercelu. Zbuduj i wdroż aplikację, sprawdź działanie widgetu.
+3. Secret Key wpisz wyłącznie w Supabase → Authentication → Bot and Abuse Protection → CAPTCHA, wybierając Turnstile. Włącz ochronę. Sekretu nie wolno umieszczać w zmiennych `VITE_*`, repozytorium ani buildzie.
+4. Sprawdź odrzucenie żądań logowania/rejestracji/resetu bez tokenu oraz z nieprawidłowym tokenem. Sprawdź prawidłowe logowanie w przeglądarce. Stare otwarte karty aplikacji mogą wymagać zamknięcia i ponownego otwarcia, aby otrzymać nowy formularz.
+
+Formularze przekazują `captchaToken` do Supabase, blokują wysłanie bez weryfikacji oraz odnawiają widget po próbie i zmianie formularza. Wygaśnięcie/błąd unieważnia token. Zmiana hasła przez już uwierzytelniony link odzyskiwania nie wymaga widgetu. Skrypt Cloudflare ładuje się tylko przy formularzu i nie trafia do cache service workera.
+
+Lokalny podgląd widgetu: `VITE_TURNSTILE_SITE_KEY=1x00000000000000000000AA npm run dev -- --port 5174`. To oficjalny klucz testowy, który **nie zapewnia ochrony** i nie może trafić do produkcji. Testy formularzy używają atrap SDK; nie dowodzą włączenia walidacji w Supabase. Po włączeniu CAPTCHA dawny `verify-cloud.mjs` nie przetestuje zwykłego logowania bez prawdziwego tokenu — nie wyłączaj ochrony dla tego skryptu.
+
+### Testy synchronizacji
 
 `npm test` obejmuje merge, konflikty, cofnięcia, odtwarzanie kolejki offline, izolację cache kont, niedostępny zapis i edycję podczas synchronizacji. `node scripts/verify-cloud.mjs` tworzy dwa tymczasowe konta i sprawdza prawdziwe RLS, logowanie, dostęp anonimowy oraz równoczesne zapisy. Po testach uruchom `node scripts/verify-cloud.mjs --cleanup`; nie publikuj pliku `output/.cloud-test-users.json`. Skrypt wymaga zalogowanego CLI Supabase i jest przeznaczony dla właściciela projektu.

@@ -45,3 +45,8 @@
 .sync-conflict p{font-size:14px}
 @media(max-width:900px){.account-form{grid-template-columns:1fr}.account-status{align-items:flex-start;flex-direction:column}.account-form .primary{justify-self:start}}
 @media(max-width:700px){.account-shortcut{font-size:10px;padding:7px}.topbar-right{gap:8px}.account-panel h2{font-size:25px}.account-actions{gap:10px}.account-panel .secondary{font-size:12px}.account-panel .text-button{min-height:44px}}
+
+.account-captcha{grid-column:1/-1;display:grid;gap:8px;max-width:360px;min-width:0;width:100%}
+.account-form:has(.account-captcha){grid-template-columns:1fr 1fr}
+.account-form:has(.account-captcha) .account-submit{grid-column:1/-1;grid-row:3;justify-self:start}
+@media(max-width:900px){.account-form:has(.account-captcha){grid-template-columns:1fr}.account-form:has(.account-captcha) .account-submit{grid-row:auto;order:1}}
