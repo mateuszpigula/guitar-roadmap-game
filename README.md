@@ -164,3 +164,9 @@ Testy obejmują strojenie, niskie struny i mocniejsze harmoniczne przy 44,1/48/9
 Detektor używa okna co najmniej 120 ms (dobranego do częstotliwości próbkowania), progu RMS 0,0005 i oceny okresowości sygnału. Krótki pojedynczy impuls nie odrzuca całej próbki. Wskazanie stroika wymaga dwóch spójnych odczytów, używa mediany i pozostaje do 1,2 s po utracie sygnału z oznaczeniem „Ostatni odczyt”; nie potwierdza wtedy aktualnego stroju. Gra „Znajdź dźwięk” otrzymuje bieżące odczyty, bez podtrzymania. Przerwany kontekst audio oraz ciągłe zerowe próbki mają osobne komunikaty i możliwość ponownego uruchomienia mikrofonu. Testy obejmują ciche wygasające sygnały z harmonicznymi i szumem oraz cykl odczyt–zanik–wygaśnięcie. Test syntetyczny nie zastępuje sprawdzenia fizycznego mikrofonu iPhone’a.
 
 Komunikaty stroika zmieniają się po 400 ms stabilnego stanu, a tekstowe wartości Hz, centów i poziomu mikrofonu odświeżają się co 400 ms. Wskazówka oraz pasek sygnału nadal reagują na każdy pomiar. Zatrzymanie mikrofonu lub zmiana celu zeruje opóźnione komunikaty.
+
+### Motyw kolorystyczny
+
+Przełącznik w nagłówku oferuje Systemowy / Jasny / Ciemny. Ustawienie `guitar-quest-theme` jest zapisywane lokalnie dla urządzenia, niezależnie od postępu i konta; otwarte karty otrzymują zmianę przez zdarzenie `storage`. Tryb systemowy reaguje na zmianę ustawień systemu. Mały skrypt w `index.html` ustawia motyw przed uruchomieniem React, a kolor paska PWA i widget Cloudflare dopasowują się do wybranego motywu. Przy zablokowanym zapisie wybór nadal działa w bieżącej sesji.
+
+Dark mode wdrożono na osobnej gałęzi w trzech iteracjach: paleta i wybór → ekrany oraz stany → formularze, kontrast i regresja mobilna. Raporty lokalne: `output/visual-reports/dark-mode/`.

@@ -62,3 +62,12 @@ html{background:var(--paper);color:var(--ink)}body{background:var(--paper);color
 [data-theme=dark] .skip-link{background:var(--panel);color:var(--accent)}
 [data-theme=dark] ::selection{background:#6e633e;color:#fff7e4}
 @media(max-width:700px){.topbar .breadcrumb{display:none}.topbar-right{width:100%;gap:12px}.xp-badge{white-space:nowrap;flex-shrink:0}.theme-control{margin-right:auto}.account-shortcut{min-height:44px}.sidebar{border-top-color:var(--line)}}
+
+/* Iteration 3: native controls, narrow screens and keyboard focus. */
+.account-form input{border:1px solid var(--line);border-radius:6px;padding:11px 12px;background:var(--panel);color:var(--ink)}
+[data-theme=dark] :is(input:not([type=checkbox]):not([type=range]),textarea,select){border-color:#7a866f}
+[data-theme=dark] .topbar .theme-picker select{background:transparent;border:0}
+[data-theme=dark] :is(.theme-picker,.secondary,.account-shortcut,.chips button,.quiz-answers button,.mic-strings button,.tempo>button){border-color:#7a866f}
+[data-theme=dark] :is(.chips button.selected,.mic-strings button.selected){border-color:#a2bc8e}
+.theme-storage-note{left:0;right:auto}.theme-picker:focus-within{outline:3px solid var(--accent);outline-offset:3px}.theme-picker select:focus-visible{outline:none}
+@media(max-width:360px){.topbar-right{gap:9px}.theme-picker select{max-width:90px}.theme-picker{gap:3px}.topbar{padding-inline:15px}}
