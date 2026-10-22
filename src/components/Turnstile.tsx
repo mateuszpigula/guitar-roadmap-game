@@ -1,4 +1,5 @@
 import {useEffect,useRef,useState} from 'react';
+import {useTheme} from '../theme';
 
 type TurnstileApi={
   render:(element:HTMLElement,options:Record<string,unknown>)=>string;
@@ -23,6 +24,7 @@ function loadTurnstile(){
 }
 
 export function Turnstile({siteKey,onToken}:{siteKey:string;onToken:(token:string)=>void}){
+  const {theme}=useTheme();
   const container=useRef<HTMLDivElement>(null);
   const callback=useRef(onToken);
   callback.current=onToken;
@@ -35,7 +37,7 @@ export function Turnstile({siteKey,onToken}:{siteKey:string;onToken:(token:strin
       if(!active||!container.current)return;
       api=loaded;
       id=api.render(container.current,{
-        sitekey:siteKey,theme:'light',size:container.current.clientWidth<300?'compact':'flexible',language:'pl',
+        sitekey:siteKey,theme,size:container.current.clientWidth<300?'compact':'flexible',language:'pl',
         'response-field':false,
         callback:(token:string)=>{if(active){setError('');callback.current(token);}},
         'expired-callback':()=>clear('Weryfikacja wygasła. Poczekaj na ponowne sprawdzenie lub spróbuj ponownie.'),
@@ -45,6 +47,6 @@ export function Turnstile({siteKey,onToken}:{siteKey:string;onToken:(token:strin
       });
     }).catch(()=>clear('Nie udało się wczytać weryfikacji. Sprawdź połączenie lub blokowanie Cloudflare w przeglądarce.'));
     return ()=>{active=false;if(id!==undefined)api?.remove(id);};
-  },[siteKey,attempt]);
+  },[siteKey,attempt,theme]);
   return <div className="account-captcha"><span className="small">Weryfikacja bezpieczeństwa</span><div ref={container}/>{error&&<><p className="error" role="alert">{error}</p><button type="button" className="text-button" onClick={()=>setAttempt(n=>n+1)}>Ponów weryfikację</button></>}</div>;
 }

@@ -12,3 +12,53 @@ html{background:var(--paper);color:var(--ink)}body{background:var(--paper);color
 [data-theme=dark] .guitar-profile strong,[data-theme=dark] .workshop-link strong,[data-theme=dark] .timer>.mono{color:var(--ink)}[data-theme=dark] .guitar-profile{border-color:var(--line)}[data-theme=dark] .subtle-badge{background:var(--surface-raised)}
 [data-theme=dark] .progress-track{background:var(--line)}[data-theme=dark] .journey-card .text-button{color:var(--sage)}
 @media(max-width:700px){.topbar-right{gap:10px}.theme-picker{padding:0 5px}.theme-picker select{font-size:11px;max-width:94px}.theme-picker>svg{width:14px}.theme-control{margin-right:auto}}
+
+/* Iteration 2: learning surfaces, feedback states and instrument diagrams. */
+:root[data-theme=dark]{--warm-surface:#3a3123;--warm-border:#8b7048;--success-bg:#2d402d;--success-ink:#c0dbad;--success-border:#769466;--error-bg:#452d27;--error-ink:#f4ba9f;--error-border:#a9735d}
+[data-theme=dark] :is(input:not([type=checkbox]):not([type=range]),textarea,select){background-color:var(--paper);border-color:var(--line);color:var(--ink)}
+[data-theme=dark] input::placeholder,[data-theme=dark] textarea::placeholder{color:#a4ae9d;opacity:1}
+[data-theme=dark] :is(button,a,input,select,textarea,summary):focus-visible{outline-color:var(--accent)}
+[data-theme=dark] input[type=checkbox],[data-theme=dark] progress{accent-color:#acc693}
+[data-theme=dark] .theme-picker select{background:transparent;border:0}
+[data-theme=dark] :is(.account-shortcut,.brand-mark,.block-check,.lesson-state,.chips button,.quiz-answers button,.beats>span,.mic-strings button){border-color:#66715d}
+[data-theme=dark] :is(.chips button.selected,.mic-strings button.selected,.song-option.selected,.song-option:hover:not(:disabled),.editor-nav[aria-current=page],.editor-tabs button.active,.editor-items button.selected){background:var(--selected);color:var(--selected-ink);border-color:#8ea27d}
+[data-theme=dark] :is(.tag,.quiz-panel .score,.badge>div,.avatar,.choice-icon,.mic-hint,.feedback-login,.feedback-empty,.editor-preview pre,.import-preview){background:var(--surface-raised);border-color:var(--line)}
+[data-theme=dark] :is(.listen-button,.unlock-box,.completion-hint,.completion-reward,.sync-conflict,.publish-review){background:var(--warm-surface);border-color:var(--warm-border);color:var(--warm-ink)}
+[data-theme=dark] :is(.lesson-row.next,.song-row.selected,.song-version,.choice-prompt,.music-example){background:#303226;border-color:#555942}
+[data-theme=dark] :is(.practice-steps p,.music-example p,.skill-progress strong,.editor-field,.editor-version,.editor-tabs small,.editor-items small,.editor-history span,.feedback-card time,.mic-privacy){color:var(--muted)}
+[data-theme=dark] :is(.music-example p,.badge.earned strong,.editor-preview a){color:var(--warm-ink)}
+[data-theme=dark] :is(.repertoire-stage,.song-ready,.editor-notice,.feedback-success){background:var(--success-bg);border-color:var(--success-border);color:var(--success-ink)}
+[data-theme=dark] .song-scope{color:var(--muted)!important}
+[data-theme=dark] .song-art{background:#35412f;color:#d6e1c8}[data-theme=dark] .song-art.tone-1{background:#4b3a25;color:#edc58d}[data-theme=dark] .song-art.tone-2{background:#3b3931;color:#ddd1b5}
+[data-theme=dark] :is(.atlas-heading,.atlas-footer,.map-point-label,.map-point small){background:#292d23}
+[data-theme=dark] .node{background:var(--surface-raised);border-color:#758064;color:var(--ink);box-shadow:0 3px 0 #10160e}
+[data-theme=dark] .map-point.selected .node{background:#564025;border-color:#c89956;color:#ffe1ad;outline-color:#403b29}
+[data-theme=dark] :is(.map-point.done .node,.lesson-state.done,.finished .block-check){background:#435c37;border-color:#90aa7c;color:#edf6e5}
+[data-theme=dark] .terrain :is(path,circle,g){stroke:#c6b888}[data-theme=dark] .terrain path[stroke-dasharray]{stroke:#d4b577}
+[data-theme=dark] .lesson-practice-bar{background:#222821f5;border-color:var(--line);box-shadow:0 3px 14px #0004}
+[data-theme=dark] .badge.earned>div{background:var(--warm-surface);color:var(--warm-ink);border-color:var(--warm-border)}
+[data-theme=dark] :is(.stream-grid>div,.learning-cycle,.editor-items,.editor-items button,.editor-many,.editor-history>div,.feedback-card details,.editor-tabs button){border-color:var(--line)}
+[data-theme=dark] .account-panel{background:var(--panel)}
+[data-theme=dark] .feedback-status{background:var(--surface-raised);color:var(--ink)}
+[data-theme=dark] .feedback-status-new{background:var(--warm-surface);color:var(--warm-ink)}
+[data-theme=dark] :is(.feedback-status-planned,.feedback-status-resolved){background:var(--success-bg);color:var(--success-ink)}
+[data-theme=dark] :is(.error,.metronome-error,.save-status.failed){color:var(--error-ink)!important}
+[data-theme=dark] :is(.storage-error,.feedback-error){background:var(--error-bg);border-color:var(--error-border);color:var(--error-ink)}
+[data-theme=dark] .storage-error p{color:var(--error-ink)}
+[data-theme=dark] .quiz-answers button.correct{background:var(--success-bg);color:var(--success-ink);border-color:var(--success-border)}
+[data-theme=dark] .quiz-answers button.incorrect{background:var(--error-bg);color:var(--error-ink);border-color:var(--error-border)}
+[data-theme=dark] :is(.tuner-readout.in-tune strong,.mic-status.is-on,.mic-game-message.is-matched,.mic-complete,.session-success){color:var(--success-ink)}
+[data-theme=dark] .mic-status.is-on>span{background:var(--success-ink)}
+[data-theme=dark] .mic-target{color:var(--selected-ink)}
+[data-theme=dark] .tuner-scale{border-color:#78866b;background:repeating-linear-gradient(90deg,transparent 0,transparent calc(10% - 1px),#59644f calc(10% - 1px),#59644f 10%)}
+[data-theme=dark] .tuner-center{background:#7f9b572a;border-color:#82976a}
+[data-theme=dark] .tuner-needle{background:var(--accent)}[data-theme=dark] .tuner-needle.in-tune{background:var(--success-ink)}[data-theme=dark] .tuner-readout.is-held strong{color:var(--muted)}
+[data-theme=dark] .beats>span.on{background:#d6a963;border-color:#d6a963;color:#292218}
+.chord text{fill:currentColor}[data-theme=dark] .chord circle{fill:var(--accent)}
+[data-theme=dark] .fret-string button{background:linear-gradient(transparent 48%,#8b8a6a 48%,#8b8a6a 52%,transparent 52%);background-color:#303226;border-right-color:#8d8b6d}
+[data-theme=dark] .fret-string button.nut{background-color:#383b2d;border-right-color:#b2af8d}
+[data-theme=dark] .fret-string button span{background:#20271e;color:#d1dcc3}
+[data-theme=dark] .fret-string button.active span{background:#d7b378;color:#282417}
+[data-theme=dark] .skip-link{background:var(--panel);color:var(--accent)}
+[data-theme=dark] ::selection{background:#6e633e;color:#fff7e4}
+@media(max-width:700px){.topbar .breadcrumb{display:none}.topbar-right{width:100%;gap:12px}.xp-badge{white-space:nowrap;flex-shrink:0}.theme-control{margin-right:auto}.account-shortcut{min-height:44px}.sidebar{border-top-color:var(--line)}}
