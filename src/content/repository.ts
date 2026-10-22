@@ -1,5 +1,5 @@
 import {cloud} from '../cloud';
-import {bundledContent,installCatalog,curriculumVersion} from './catalog';
+import {bundledContent,bundledVersion,installCatalog,curriculumVersion} from './catalog';
 import {assertCompatible,parseRelease} from './model';
 import type {Release} from './model';
 export interface ContentCache {read():Promise<Release|null>;write(r:Release):Promise<void>}
@@ -18,11 +18,11 @@ export async function fetchRelease():Promise<Release|null>{
 export interface ContentStatus {version:number;origin:'cloud'|'cache'|'bundle';warning:string}
 export async function loadCatalog(cache:ContentCache,fetcher=fetchRelease):Promise<ContentStatus>{
  let saved:Release|null=null,warning='';
- try{saved=await cache.read();if(saved)assertCompatible(bundledContent,saved.content);}catch{saved=null;warning='Nie można odczytać lokalnej kopii programu.';}
+ try{saved=await cache.read();if(saved&&saved.version<bundledVersion)saved=null;if(saved)assertCompatible(bundledContent,saved.content);}catch{saved=null;warning='Nie można odczytać lokalnej kopii programu.';}
  let selected=saved,origin:ContentStatus['origin']=saved?'cache':'bundle';
- try{const remote=await fetcher();if(remote&&remote.version>=(saved?.version??2)){assertCompatible(saved?.content??bundledContent,remote.content);selected=remote;origin='cloud';try{await cache.write(remote);warning='';}catch{warning='Program pobrany, ale zapis offline jest niedostępny. Przywróć dostęp do pamięci przeglądarki.';}}else if(!remote)warning=saved?'Korzystasz z ostatnio pobranego programu.':'Korzystasz z programu dołączonego do aplikacji.';}
+ try{const remote=await fetcher();if(remote&&remote.version>=(saved?.version??bundledVersion)){assertCompatible(saved?.content??bundledContent,remote.content);selected=remote;origin='cloud';try{await cache.write(remote);warning='';}catch{warning='Program pobrany, ale zapis offline jest niedostępny. Przywróć dostęp do pamięci przeglądarki.';}}else if(!remote||!selected)warning=saved?'Korzystasz z ostatnio pobranego programu.':'Korzystasz z programu dołączonego do aplikacji.';}
  catch{warning=saved?'Nie udało się pobrać aktualizacji. Korzystasz z zapisanej wersji programu.':'Nie udało się pobrać programu z chmury. Dostępna jest wersja dołączona do aplikacji.';}
- if(selected)installCatalog(selected);
+ installCatalog(selected??{version:bundledVersion,title:'Program dołączony do aplikacji',published_at:'2026-10-21T00:00:00.000Z',content:bundledContent});
  return {version:curriculumVersion,origin,warning};
 }
 export async function bootstrapCatalog():Promise<ContentStatus>{

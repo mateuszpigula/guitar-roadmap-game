@@ -26,9 +26,9 @@ export function LessonFeedback({lesson,userId,onLogin,onAll,onDirty}:{lesson:Les
   <div className="section-label"><MessageSquare size={16}/> POMÓŻ ULEPSZYĆ PROGRAM</div><h2 id="lesson-feedback-heading">Feedback do lekcji</h2>
   <p>Co było niejasne, za trudne albo czego zabrakło? Ta wiadomość trafi do administratora. Twoje prywatne notatki pozostają osobno.</p>
   {!userId?<div className="feedback-login"><p>Zaloguj się, aby zapisywać uwagi i później zebrać je ze wszystkich urządzeń.</p><button className="secondary" onClick={onLogin}>Zaloguj się, aby dodać feedback</button></div>:<>
-   <form onSubmit={e=>{e.preventDefault();void send();}}>
+   <form autoComplete="off" onSubmit={e=>{e.preventDefault();void send();}}>
     <label>Temat uwagi<select value={category} disabled={busy} onChange={e=>setCategory(e.target.value as FeedbackCategory)}>{Object.entries(feedbackCategories).map(([id,label])=><option key={id} value={id}>{label}</option>)}</select></label>
-    <label>Twoja uwaga dla administratora<textarea value={body} minLength={3} maxLength={5000} required disabled={busy} onChange={e=>{setBody(e.target.value);setMessage('');}} placeholder="Np. nie rozumiem, na której strunie zacząć ćwiczenie. Przydałby się przykład w wolnym tempie."/></label>
+    <label>Twoja uwaga dla administratora<textarea name="lesson-feedback-body" autoComplete="off" autoCapitalize="sentences" spellCheck value={body} minLength={3} maxLength={5000} required disabled={busy} onChange={e=>{setBody(e.target.value);setMessage('');}} placeholder="Np. nie rozumiem, na której strunie zacząć ćwiczenie. Przydałby się przykład w wolnym tempie."/></label>
     <div className="feedback-submit"><span className="small muted">{body.length}/5000 · zapis po wysłaniu, wymaga internetu</span><button type="submit" className="primary" disabled={busy||body.trim().length<3}><Send size={16}/>{busy?'Wysyłam…':'Wyślij feedback'}</button></div>
    </form>
    {error&&<p role="alert" className="feedback-error">{error}</p>}{message&&<p role="status" className="feedback-success">{message}</p>}

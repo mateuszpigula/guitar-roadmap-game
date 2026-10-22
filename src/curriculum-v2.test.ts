@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { coreLessons, lessons, lessonById } from './content/catalog';
+import { coreLessons, lessons, lessonById, bundledVersion } from './content/catalog';
 import { songs, songById } from './content/catalog';
 import { freshState, progressFor, setStatus, parseBackup, isAvailable, nextLesson, xp } from './state';
 import { mergeProgress } from './sync';
@@ -40,7 +40,7 @@ describe('expanded learning path',()=>{
  });
  it('upgrades a v1 backup preserving all user history, without granting new lessons',()=>{
   const s=freshState();s.curriculumVersion=1;s.progress['ch-10-8']={...progressFor(s,'ch-10-8'),status:'done',completedAt:now.toISOString(),due:'2026-10-22T12:00:00.000Z',notes:'Mój stary występ',bpm:83};s.songs['song-04']={status:'practicing',notes:'Moja wersja',bpm:72};
-  const upgraded=parseBackup(JSON.stringify(s));expect(upgraded.curriculumVersion).toBe(2);expect(upgraded.progress).toEqual(s.progress);expect(upgraded.songs).toEqual(s.songs);expect(xp(upgraded)).toBe(30);expect(upgraded.progress['rep-10']).toBeUndefined();
+  const upgraded=parseBackup(JSON.stringify(s));expect(upgraded.curriculumVersion).toBe(bundledVersion);expect(upgraded.progress).toEqual(s.progress);expect(upgraded.songs).toEqual(s.songs);expect(xp(upgraded)).toBe(30);expect(upgraded.progress['rep-10']).toBeUndefined();
  });
  it('roundtrips a completed choice and rejects invalid selection without touching current state',()=>{
   const s=setStatus(readyScene(),'rep-01','done',now),before=JSON.stringify(s);expect(parseBackup(before)).toEqual(s);

@@ -117,7 +117,7 @@ Opublikowanych identyfikatorów nie usuwamy ani nie zmieniamy ich rozdziału, ro
 
 ### Offline i zgodność wersji
 
-Aplikacja przed otwarciem postępu pobiera najnowszą poprawną wersję i zapisuje ją w osobnej bazie IndexedDB `guitar-quest-curriculum`. Jeśli sieć jest niedostępna, korzysta z zapisanej kopii; przy pierwszym uruchomieniu bez kopii ma program v2 dołączony do aplikacji. Brak możliwości zapisu offline jest komunikowany. Pliki aplikacji buforuje service worker; żądania Supabase nie są buforowane przez service worker.
+Aplikacja przed otwarciem postępu pobiera najnowszą poprawną wersję i zapisuje ją w osobnej bazie IndexedDB `guitar-quest-curriculum`. Jeśli sieć jest niedostępna, korzysta z zapisanej kopii albo programu v3 dołączonego do aplikacji — wybiera nowszą wersję. Starszy cache ani opóźniona odpowiedź serwera nie cofają poprawek z pakietu aplikacji. Brak możliwości zapisu offline jest komunikowany. Pliki aplikacji buforuje service worker; żądania Supabase nie są buforowane przez service worker.
 
 Postęp z nowszej wersji programu zachowuje nieznane starszemu urządzeniu zadania i utwory. Ekran prosi wtedy o aktualizację; lokalnie nieznane lekcje nie są jeszcze wliczane do wyświetlanego XP. Import, eksport i synchronizacja nie usuwają tych rekordów. Przy pierwszym wdrożeniu tej funkcji należy odświeżyć starsze, otwarte karty aplikacji.
 
@@ -150,3 +150,17 @@ Aplikacja ma manifest `/manifest.webmanifest`, stałe ID `/`, własne ikony 192/
 Na Androidzie/komputerze otwórz produkcyjny adres w przeglądarce obsługującej instalację PWA i wybierz instalację aplikacji z menu lub paska adresu. Na iPhonie w Safari wybierz Udostępnij → Do ekranu początkowego (w zależności od wersji iOS także „Otwórz jako aplikację”). Instalacja wymaga pierwszego otwarcia online. Logowanie i synchronizacja nadal używają Supabase; nie zakładamy automatycznego przeniesienia sesji między każdą przeglądarką a zainstalowaną aplikacją.
 
 Service worker buforuje też manifest i ikony. Zmiana zawartości tych plików zmienia wersję cache; zasoby o stałych nazwach są czytane z aktualnego cache, a starsze pliki z hashem pozostają dostępne dla otwartych kart. Vercel wymaga rewalidacji manifestu i skryptu service workera. Bez internetu działają pobrana aplikacja/program i lokalny postęp; synchronizacja, feedback i zewnętrzne filmy wymagają sieci. Weryfikację instalowalności i offline wykonuj na produkcyjnym buildzie (`npm run build`, `npm run preview`), ponieważ serwer deweloperski nie rejestruje service workera.
+
+### Mikrofon: stroik i znajdowanie dźwięków
+
+W Warsztacie dostępne są stroik chromatyczny (A4 = 440 Hz), wybór jednej z sześciu strun EADGBE oraz seria pięciu dźwięków C4/E4/D4/G4/F4 z podpowiedziami na gryfie. Mikrofon uruchamia się wyłącznie przyciskiem. Wymaga HTTPS (lub localhost) i zgody w przeglądarce. Analiza pojedynczych dźwięków działa lokalnie przez Web Audio; nie zapisuje ani nie wysyła audio. Wyjście z Warsztatu, ukrycie aplikacji lub przycisk zatrzymania zwalnia mikrofon. Anulowanie oczekującej zgody zwalnia również strumień przyznany później.
+
+Detektor normalizowanej różnicy okresowej odrzuca ciszę, niepewne odczyty i przesterowanie. Stroik pokazuje odchylenie w centach, z obszarem ±10 centów. Ćwiczenie wymaga poprawnej oktawy i odchylenia do ±35 centów przez co najmniej 650 ms; cisza, inna nuta lub przerwa w odczytach zerują ten czas. Każdą pozycję można zaliczyć raz, a przejście wymaga kliknięcia. Wynik jest sesyjny, nie przyznaje XP i nie zmienia postępu lekcji. Nie rozpoznajemy akordów, palcowania ani wybranej struny.
+
+Testy obejmują strojenie, niskie struny i mocniejsze harmoniczne przy 44,1/48/96 kHz, szum i przesterowanie, stabilność zaliczenia, zgodę/odmowę, anulowanie oczekiwania, odłączenie urządzenia i zwalnianie zasobów. Testy przeglądarkowe z syntetycznym strumieniem nie zastępują próby na fizycznym telefonie i gitarze.
+
+### Stroik: cichy sygnał i wygasanie nuty
+
+Detektor używa okna co najmniej 120 ms (dobranego do częstotliwości próbkowania), progu RMS 0,0005 i oceny okresowości sygnału. Krótki pojedynczy impuls nie odrzuca całej próbki. Wskazanie stroika wymaga dwóch spójnych odczytów, używa mediany i pozostaje do 1,2 s po utracie sygnału z oznaczeniem „Ostatni odczyt”; nie potwierdza wtedy aktualnego stroju. Gra „Znajdź dźwięk” otrzymuje bieżące odczyty, bez podtrzymania. Przerwany kontekst audio oraz ciągłe zerowe próbki mają osobne komunikaty i możliwość ponownego uruchomienia mikrofonu. Testy obejmują ciche wygasające sygnały z harmonicznymi i szumem oraz cykl odczyt–zanik–wygaśnięcie. Test syntetyczny nie zastępuje sprawdzenia fizycznego mikrofonu iPhone’a.
+
+Komunikaty stroika zmieniają się po 400 ms stabilnego stanu, a tekstowe wartości Hz, centów i poziomu mikrofonu odświeżają się co 400 ms. Wskazówka oraz pasek sygnału nadal reagują na każdy pomiar. Zatrzymanie mikrofonu lub zmiana celu zeruje opóźnione komunikaty.
