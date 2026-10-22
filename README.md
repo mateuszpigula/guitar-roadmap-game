@@ -1,6 +1,6 @@
 # Guitar Quest
 
-Prywatna aplikacja do nauki gitary klasycznej: 10 rozdziałów, 80 zadań głównych i 20 pobocznych, codzienna sesja, powtórki, repertuar i warsztat muzyczny. Interfejs i autorskie instrukcje są po polsku.
+Prywatna aplikacja do nauki gitary klasycznej: 10 rozdziałów, 150 zadań głównych i 50 pobocznych, codzienna sesja, powtórki, repertuar i warsztat muzyczny. Interfejs i autorskie instrukcje są po polsku.
 
 ## Uruchomienie
 
@@ -24,7 +24,7 @@ npm run preview
 ## Dane i kopie
 
 - IndexedDB `guitar-quest`, magazyn `state`, klucz `progress`.
-- Schemat danych `version: 1`; program `curriculumVersion: 1`.
+- Schemat danych `version: 1`; program `curriculumVersion: 4`.
 - `src/storage.ts` definiuje granicę repozytorium (`load`, `save`), którą można zastąpić backendem.
 - Eksport/import dostępny w **Twoje postępy**. Import przechodzi walidację i wymaga potwierdzenia zastąpienia obecnego stanu.
 - Błąd odczytu nie powoduje automatycznego nadpisania bazy. Błąd zapisu pokazuje komunikat, pozwala wyeksportować stan i ponowić zapis.
@@ -33,13 +33,13 @@ npm run preview
 
 ## Zachowanie
 
-XP jest wyliczane z aktualnie zaliczonych zadań (10 za zwykłe, 30 za wyzwanie). Cofnięcie zaliczenia odejmuje te punkty, ale nie usuwa późniejszych zadań. Kolejne kliknięcia nie naliczają duplikatów. Odznaka wymaga wszystkich ośmiu głównych zadań rozdziału; zadania dodatkowe nie blokują trasy.
+XP jest wyliczane z aktualnie zaliczonych zadań (10 za zwykłe, 30 za wyzwanie). Cofnięcie zaliczenia odejmuje te punkty, ale nie usuwa późniejszych zadań. Kolejne kliknięcia nie naliczają duplikatów. Odznaka wymaga wszystkich głównych zadań rozdziału; zadania dodatkowe nie blokują trasy.
 
-Pierwsza powtórka przypada po jednym dniu. „Pamiętam” ustawia kolejne odstępy 3, 7, 14 i dalej 14 dni od oceny. „Jeszcze trudne” wraca do jednego dnia. Zaległe zadania pozostają do powtórzenia. Ocena jest własna, aplikacja nie słucha gry przez mikrofon.
+Pierwsza powtórka przypada po jednym dniu. „Pamiętam” ustawia kolejne odstępy 3, 7, 14 i dalej 14 dni od oceny. „Jeszcze trudne” wraca do jednego dnia. Zaległe zadania pozostają do powtórzenia. Ocena zaliczenia jest własna; opcjonalny mikrofon służy stroikowi i ćwiczeniom rozpoznawania pojedynczych dźwięków.
 
 Codzienna sesja ma 15, 18 lub 20 minut. Zaznaczenie bloku zapisuje deklarowany czas ćwiczenia, nie pomiar czasu spędzonego w aplikacji. Zadanie zalicza się osobno. Historia zapisuje jeden zestaw bloków na lokalny dzień.
 
-Metronom używa harmonogramu AudioContext, a timer końca odliczania względem zegara. Odsłuch gryfu, akordów i quizów jest syntetyczny. Quizy są ćwiczeniami bieżącej serii; ich wynik nie zmienia XP. Nie jest potrzebny mikrofon. Konto jest wymagane tylko do synchronizacji.
+Metronom generuje co najmniej minutowy WAV z akcentem na pierwszą miarę i odtwarza go w pętli przez natywne HTMLAudioElement. Puls nie zależy od timerów JavaScript ani widoczności karty; timer interfejsu służy tylko animacji. Media Session udostępnia systemowi sterowanie odtwarzaniem. Zmiana tempa/metrum zaczyna nowy takt, a wyjście z lekcji/Warsztatu zatrzymuje metronom. Wykryte przerwanie audio przez system pokazuje przycisk ponownego uruchomienia. Zachowanie przy fizycznej blokadzie iPhone’a wymaga testu na urządzeniu (test przeglądarkowy obejmuje ukrycie karty). Timer ćwiczenia liczy pozostały czas względem zegara. Odsłuch gryfu, akordów i quizów jest syntetyczny. Quizy są ćwiczeniami bieżącej serii; ich wynik nie zmienia XP. Do metronomu i odsłuchu nie jest potrzebny mikrofon. Konto jest wymagane do synchronizacji oraz wysyłania feedbacku.
 
 ## Program i źródła
 
@@ -170,3 +170,9 @@ Komunikaty stroika zmieniają się po 400 ms stabilnego stanu, a tekstowe warto�
 Przełącznik w nagłówku oferuje Systemowy / Jasny / Ciemny. Ustawienie `guitar-quest-theme` jest zapisywane lokalnie dla urządzenia, niezależnie od postępu i konta; otwarte karty otrzymują zmianę przez zdarzenie `storage`. Tryb systemowy reaguje na zmianę ustawień systemu. Mały skrypt w `index.html` ustawia motyw przed uruchomieniem React, a kolor paska PWA i widget Cloudflare dopasowują się do wybranego motywu. Przy zablokowanym zapisie wybór nadal działa w bieżącej sesji.
 
 Dark mode wdrożono na osobnej gałęzi w trzech iteracjach: paleta i wybór → ekrany oraz stany → formularze, kontrast i regresja mobilna. Raporty lokalne: `output/visual-reports/dark-mode/`.
+
+### Publikacja 4 — instrukcje techniki i konkretne źródła
+
+`src/data/lessonRefinements.ts` doprecyzowuje 12 lekcji oraz odnośniki w 42 lekcjach. Wszystkie odnośniki This Is Classical Guitar używane przez lekcje prowadzą do konkretnych materiałów (27 stron sprawdzonych 22 października 2026). Lekcje p–i–m–a i tirando/apoyando mają schematy oraz linki do odpowiednich minut filmu.
+
+`supabase/releases/004_practical_technique.sql` publikuje tę samą treść w bazie. To transakcyjna publikacja programu, nie migracja schematu. Sprawdza wersję i skrót poprzedniej treści oraz stan istniejącego szkicu; w razie nowszej edycji przerywa całość. Zachowuje identyfikatory, wymagania, XP, postępy i notatki. Aktualizuje zgodny szkic do nowej bazy zamiast go usuwać. Skrypt jest przeznaczony do jednorazowego wykonania przez administratora; ponowne uruchomienie po publikacji jest blokowane.

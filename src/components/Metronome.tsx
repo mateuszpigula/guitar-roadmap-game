@@ -2,51 +2,35 @@ import {useEffect,useRef,useState} from 'react';
 import {Pause,Play,Volume2} from 'lucide-react';
 import {BpmInput} from './BpmInput';
 import {audioContext,tone} from '../audio';
+import {MetronomePlayer,type MetronomeState} from '../metronomeAudio';
 
 export function Metronome({compact=false,initialBpm=60}:{compact?:boolean;initialBpm?:number}){
- const [bpm,setBpm]=useState(initialBpm),[meter,setMeter]=useState(4),[ctx,setCtx]=useState<AudioContext|null>(null);
- const [starting,setStarting]=useState(false),[beat,setBeat]=useState(-1),[error,setError]=useState('');
- const generation=useRef(0),pending=useRef(false);
- const running=ctx!==null;
- function stop(){generation.current++;pending.current=false;setStarting(false);setCtx(null);setBeat(-1);}
- async function toggle(){
-  if(running||pending.current){stop();return;}
-  const gen=++generation.current;pending.current=true;setStarting(true);setError('');
-  // This is inside the click handler: create/resume audio while user activation is live.
-  const ready=audioContext();
-  try{const audio=await ready;if(gen===generation.current)setCtx(audio);}
-  catch{if(gen===generation.current)setError('Nie udało się uruchomić audio. Sprawdź głośność multimediów i naciśnij Graj ponownie.');}
-  finally{if(gen===generation.current){pending.current=false;setStarting(false);}}
- }
+ const [bpm,setBpm]=useState(initialBpm),[meter,setMeter]=useState(4);
+ const [state,setState]=useState<MetronomeState>({status:'stopped'}),[beat,setBeat]=useState(-1),[error,setError]=useState('');
+ const element=useRef<HTMLAudioElement>(null),player=useRef<MetronomePlayer|null>(null);
+ const running=state.status==='playing',starting=state.status==='starting';
  useEffect(()=>{
-  const hide=()=>{if(document.hidden)stop();};
-  document.addEventListener('visibilitychange',hide);
-  return()=>{generation.current++;document.removeEventListener('visibilitychange',hide);};
+  const engine=new MetronomePlayer(element.current!,next=>{setState(next);setError(next.error??'');});player.current=engine;
+  return()=>{engine.dispose();player.current=null;};
  },[]);
+ function toggle(){if(running||starting)player.current?.stop();else void player.current?.start({bpm,meter});}
+ function changeTempo(value:number){setBpm(value);if(running||starting)void player.current?.start({bpm:value,meter});}
+ function changeMeter(value:number){setMeter(value);if(running||starting)void player.current?.start({bpm,meter:value});}
  useEffect(()=>{
-  if(!ctx)return;
-  let next=ctx.currentTime+.07,index=0;
-  const displays=new Set<ReturnType<typeof setTimeout>>(),sounds=new Map<number,()=>void>();
-  function schedule(){
-   if(!ctx||ctx.state!=='running'){setCtx(null);setBeat(-1);setError('Dźwięk został przerwany. Naciśnij Graj, aby wznowić metronom.');return;}
-   for(const [end] of sounds)if(end<ctx.currentTime)sounds.delete(end);
-   if(next<ctx.currentTime-.1)next=ctx.currentTime+.03;
-   while(next<ctx.currentTime+.1){
-    const b=index%meter;
-    sounds.set(next+.1,tone(ctx,b===0?81:76,next,.065,b===0?.35:.25));
-    const display=setTimeout(()=>{displays.delete(display);setBeat(b);},Math.max(0,(next-ctx.currentTime)*1000));displays.add(display);
-    next+=60/bpm;index++;
-   }
-  }
-  schedule();const interval=setInterval(schedule,25);
-  return()=>{clearInterval(interval);displays.forEach(clearTimeout);sounds.forEach(cancel=>cancel());};
- },[ctx,bpm,meter]);
+  if(!running){setBeat(-1);return;}
+  // This timer paints only. Audio continues independently when timers are throttled.
+  const display=()=>{if(!document.hidden)setBeat(player.current?.beat()??-1);};
+  display();const timer=setInterval(display,50);document.addEventListener('visibilitychange',display);
+  return()=>{clearInterval(timer);document.removeEventListener('visibilitychange',display);};
+ },[running]);
  async function testSound(){setError('');try{const audio=await audioContext();tone(audio,81,audio.currentTime+.02,.2,.3);}catch{setError('Audio jest niedostępne. Sprawdź głośność multimediów, wyjście Bluetooth i uprawnienia przeglądarki.');}}
- const controls=<><div className="beats" aria-label={`Puls metronomu ${meter}/4`}>{Array.from({length:meter},(_,i)=><span key={i} className={running&&beat===i?'on':''}>{i+1}</span>)}</div><div className="row"><label>Akcent <select aria-label="Metrum metronomu" value={meter} onChange={e=>setMeter(+e.target.value)}><option value={4}>4/4</option><option value={3}>3/4</option><option value={2}>2/4</option></select></label><button className="primary" aria-label={running?'Zatrzymaj metronom':starting?'Anuluj uruchamianie metronomu':'Uruchom metronom'} onClick={()=>void toggle()}>{running?<Pause size={16}/>:<Play size={16}/>} {running?'Zatrzymaj':starting?'Anuluj':'Graj'}</button></div></>;
+ const controls=<><div className="beats" aria-label={`Puls metronomu ${meter}/4`}>{Array.from({length:meter},(_,i)=><span key={i} className={running&&beat===i?'on':''}>{i+1}</span>)}</div><div className="row"><label>Akcent <select aria-label="Metrum metronomu" value={meter} onChange={e=>changeMeter(+e.target.value)}><option value={4}>4/4</option><option value={3}>3/4</option><option value={2}>2/4</option></select></label><button className="primary" aria-label={running?'Zatrzymaj metronom':starting?'Anuluj uruchamianie metronomu':'Uruchom metronom'} onClick={()=>void toggle()}>{running?<Pause size={16}/>:<Play size={16}/>} {running?'Zatrzymaj':starting?'Anuluj':'Graj'}</button></div></>;
  return <section className={compact?'metronome-compact':'panel tool-panel'} aria-label="Metronom">
   {!compact&&<><div className="section-label">01 / RYTM</div><h2>Twój równy puls</h2><p>Najpierw czysto. Potem szybciej.</p></>}
-  {compact?<label className="compact-tempo">Metronom <BpmInput ariaLabel="Tempo metronomu w BPM" value={bpm} onChange={setBpm}/> BPM</label>:<><div className="tempo"><button aria-label="Zmniejsz tempo" onClick={()=>setBpm(v=>Math.max(30,v-5))}>−</button><strong>{bpm}<small>BPM</small></strong><button aria-label="Zwiększ tempo" onClick={()=>setBpm(v=>Math.min(240,v+5))}>+</button></div><label className="range-label">Tempo<input aria-label="Tempo metronomu" type="range" min="30" max="240" value={bpm} onChange={e=>setBpm(+e.target.value)}/></label></>}
+  {compact?<label className="compact-tempo">Metronom <BpmInput ariaLabel="Tempo metronomu w BPM" value={bpm} onChange={changeTempo}/> BPM</label>:<><div className="tempo"><button aria-label="Zmniejsz tempo" onClick={()=>changeTempo(Math.max(30,bpm-5))}>−</button><strong>{bpm}<small>BPM</small></strong><button aria-label="Zwiększ tempo" onClick={()=>changeTempo(Math.min(240,bpm+5))}>+</button></div><label className="range-label">Tempo<input aria-label="Tempo metronomu" type="range" min="30" max="240" value={bpm} onChange={e=>changeTempo(+e.target.value)}/></label></>}
+  <audio ref={element} hidden loop preload="auto"/>
   {controls}
+  {running&&<p className="small metronome-background" role="status">Gra także w tle. Zatrzymaj tutaj lub z ekranu blokady. Wyjście z lekcji / Warsztatu zatrzymuje metronom.</p>}
   <div className="metronome-help"><button className="text-button" onClick={()=>void testSound()}><Volume2 size={14}/> Sprawdź dźwięk</button>{!compact&&<span className="small">Nie słyszysz? Sprawdź głośność multimediów i połączenie Bluetooth. W starszym Safari wyłącz tryb cichy telefonu.</span>}</div>
   {error&&<p className="metronome-error" role="alert">{error}</p>}
  </section>;
