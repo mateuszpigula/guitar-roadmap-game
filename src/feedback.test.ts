@@ -1,0 +1,15 @@
+import {beforeEach,describe,expect,it,vi} from 'vitest';
+import {exportFeedback,fetchFeedback,reviewFeedback,submitFeedback} from './feedback';
+import type {Feedback} from './feedback';
+const {fetcher}=vi.hoisted(()=>({fetcher:vi.fn()}));
+vi.mock('./cloud',async()=>{const {createClient}=await import('@supabase/supabase-js');return {cloud:createClient('https://test.invalid','public-test-key',{global:{fetch:fetcher},auth:{persistSession:false,autoRefreshToken:false}})};});
+const response=(data:unknown,status=200)=>new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json'}});
+beforeEach(()=>fetcher.mockReset());
+describe('feedback transport',()=>{
+ it('sends only the explicit feedback, stable request ID and lesson version',async()=>{fetcher.mockResolvedValue(response({id:'request'}));await submitFeedback({id:'request',lessonId:'ch-01-1',version:2,category:'idea',body:' Example '});const options=fetcher.mock.calls[0][1];expect(new Headers(options.headers).get('Accept')).toBe('application/vnd.pgrst.object+json');expect(JSON.parse(options.body)).toEqual({request_id:'request',target_lesson:'ch-01-1',program_version:2,feedback_category:'idea',feedback_body:'Example'});});
+ it('keeps failed writes explicit instead of reporting success',async()=>{fetcher.mockResolvedValue(response({message:'No connection'},503));await expect(submitFeedback({id:'request',lessonId:'ch-01-1',version:2,category:'idea',body:'Example'})).rejects.toThrow('Nie potwierdzono zapisu');});
+ it('scopes the owner list and uses stable secondary ordering',async()=>{fetcher.mockResolvedValue(response([]));await fetchFeedback({userId:'owner',lessonId:'ch-01-1'});const url=new URL(fetcher.mock.calls[0][0]);expect(url.searchParams.get('user_id')).toBe('eq.owner');expect(url.searchParams.get('lesson_id')).toBe('eq.ch-01-1');expect(url.searchParams.get('order')).toBe('created_at.desc,id.desc');});
+ it('requests a complete single-result export, beyond 1000 records',async()=>{const entries=Array.from({length:1100},(_,i)=>({id:String(i)}));fetcher.mockResolvedValue(response({format:'guitar-quest-feedback',schemaVersion:1,scope:'mine',count:1100,entries}));expect((await exportFeedback('mine')).entries).toHaveLength(1100);expect(JSON.parse(fetcher.mock.calls[0][1].body)).toEqual({export_scope:'mine'});});
+ it('rejects incomplete exports',async()=>{fetcher.mockResolvedValue(response({format:'guitar-quest-feedback',schemaVersion:1,scope:'mine',count:2,entries:[]}));await expect(exportFeedback('mine')).rejects.toThrow('Niepełny');});
+ it('passes the revision for review and exposes conflicts',async()=>{fetcher.mockResolvedValue(response({message:'Feedback zmienił się w innej karcie.',code:'40001'},409));await expect(reviewFeedback({id:'f',revision:3} as Feedback,'planned')).rejects.toThrow('innej karcie');expect(JSON.parse(fetcher.mock.calls[0][1].body)).toEqual({feedback_id:'f',expected_revision:3,next_status:'planned'});});
+});

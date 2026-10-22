@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { IDBFactory } from 'fake-indexeddb';
 import { freshState, isAvailable, parseBackup, plusDays, progressFor, review, setStatus, xp, dueLessons, nextLesson } from './state';
-import { lessons, coreLessons, lessonById, sources, chapters } from './data/curriculum';
+import { lessons, coreLessons, lessonById, sources, chapters } from './content/catalog';
 import { createRepository } from './storage';
-import { songs } from './data/repertoire';
+import { songs } from './content/catalog';
 const start=new Date('2026-10-20T10:00:00.000Z');
 describe('curriculum integrity',()=>{
  it('has 150 complete core lessons, 50 side quests and 20 meaningful challenges',()=>{

@@ -4,7 +4,7 @@ import {freshState,emptyProgress,setStatus} from './state';
 import {mergeProgress,cloudCache} from './sync';
 import {CloudEngine,emptyRemote} from './cloud-engine';
 import type {CloudTransport,RemoteProgress} from './cloud-engine';
-import {coreLessons} from './data/curriculum';
+import {coreLessons} from './content/catalog';
 const id=coreLessons[0].id,second=coreLessons[1].id;
 const note=(text:string)=>({...freshState(),progress:{[id]:{...emptyProgress(),notes:text}}});
 function server(){let remote:RemoteProgress=emptyRemote(),offline=false;const transport:CloudTransport={async read(){if(offline)throw new Error('offline');return structuredClone(remote);},async save(revision,state){if(offline)throw new Error('offline');if(revision!==remote.revision)return false;remote={state:structuredClone(state),revision:revision+1};return true;}};return {transport,get:()=>remote,offline:(v:boolean)=>{offline=v;}};}
