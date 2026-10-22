@@ -1,16 +1,38 @@
 // @vitest-environment jsdom
 import {afterEach,beforeEach,expect,it,vi} from 'vitest';
 import {act,cleanup,fireEvent,render,screen} from '@testing-library/react';
-const audio=vi.hoisted(()=>({audioContext:vi.fn(),tone:vi.fn()}));
-vi.mock('../audio',()=>audio);
 import {Metronome} from './Metronome';
-let context:{state:string;currentTime:number};let cancellations:Array<ReturnType<typeof vi.fn>>;
-beforeEach(()=>{vi.useFakeTimers();vi.clearAllMocks();context={state:'running',currentTime:0};cancellations=[];audio.audioContext.mockResolvedValue(context);audio.tone.mockImplementation(()=>{const cancel=vi.fn();cancellations.push(cancel);return cancel;});});
-afterEach(()=>{cleanup();vi.useRealTimers();});
+let play:ReturnType<typeof vi.spyOn>,pause:ReturnType<typeof vi.spyOn>;
+beforeEach(()=>{
+ vi.useFakeTimers();play=vi.spyOn(HTMLMediaElement.prototype,'play').mockResolvedValue();pause=vi.spyOn(HTMLMediaElement.prototype,'pause').mockImplementation(()=>{});vi.spyOn(HTMLMediaElement.prototype,'load').mockImplementation(()=>{});
+ vi.stubGlobal('URL',Object.assign(URL,{createObjectURL:vi.fn(()=>'blob:test'),revokeObjectURL:vi.fn()}));
+});
+afterEach(()=>{cleanup();vi.useRealTimers();vi.restoreAllMocks();vi.unstubAllGlobals();});
 async function start(){await act(async()=>fireEvent.click(screen.getByRole('button',{name:'Uruchom metronom'})));}
-it('starts audio on demand, schedules audible beats, cancels on stop',async()=>{render(<Metronome/>);expect(audio.audioContext).not.toHaveBeenCalled();await start();expect(audio.tone).toHaveBeenCalledWith(context,81,.07,.065,.35);fireEvent.click(screen.getByRole('button',{name:'Zatrzymaj metronom'}));expect(cancellations[0]).toHaveBeenCalledOnce();act(()=>{context.currentTime=3;vi.advanceTimersByTime(3000);});expect(audio.tone).toHaveBeenCalledTimes(1);});
-it('stops on audio interruption and lets the user restart explicitly',async()=>{render(<Metronome/>);await start();act(()=>{context.state='interrupted';vi.advanceTimersByTime(30);});expect(screen.getByRole('alert').textContent).toContain('przerwany');expect(screen.getByRole('button',{name:'Uruchom metronom'})).toBeTruthy();context.state='running';await start();expect(screen.queryByRole('alert')).toBeNull();});
-it('ignores a late audio resume after cancellation',async()=>{let resume!:(value:unknown)=>void;audio.audioContext.mockReturnValue(new Promise(resolve=>resume=resolve));render(<Metronome/>);fireEvent.click(screen.getByRole('button',{name:'Uruchom metronom'}));fireEvent.click(screen.getByRole('button',{name:'Anuluj uruchamianie metronomu'}));await act(async()=>resume(context));expect(audio.tone).not.toHaveBeenCalled();});
-it('releases scheduled sounds and timers on unmount',async()=>{const {unmount}=render(<Metronome compact/>);await start();unmount();expect(cancellations[0]).toHaveBeenCalledOnce();act(()=>vi.advanceTimersByTime(3000));expect(audio.tone).toHaveBeenCalledTimes(1);});
-it('provides retry after a rejected audio start',async()=>{audio.audioContext.mockRejectedValueOnce(Error('Blocked'));render(<Metronome/>);await start();expect(screen.getByRole('alert').textContent).toContain('Nie udało');await start();expect(screen.queryByRole('alert')).toBeNull();});
-it('allows entering a new tempo without clamping partially typed digits',()=>{render(<Metronome compact/>);const field=screen.getByRole('spinbutton',{name:'Tempo metronomu w BPM'}) as HTMLInputElement;fireEvent.change(field,{target:{value:'9'}});expect(field.value).toBe('9');fireEvent.change(field,{target:{value:'90'}});fireEvent.blur(field);expect(field.value).toBe('90');});
+it('starts native looped audio on demand and releases the track on stop',async()=>{
+ const {container}=render(<Metronome/>);expect(play).not.toHaveBeenCalled();await start();
+ const audio=container.querySelector('audio')!;expect(audio.loop).toBe(true);expect(audio.src).toBe('blob:test');
+ fireEvent.click(screen.getByRole('button',{name:'Zatrzymaj metronom'}));expect(audio.getAttribute('src')).toBeNull();expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:test');
+});
+it('does not stop on screen lock or hidden page; timers only paint the beat',async()=>{
+ render(<Metronome/>);await start();pause.mockClear();
+ act(()=>{vi.spyOn(document,'hidden','get').mockReturnValue(true);document.dispatchEvent(new Event('visibilitychange'));vi.advanceTimersByTime(120000);});
+ expect(pause).not.toHaveBeenCalled();expect(play).toHaveBeenCalledTimes(1);expect(screen.getByRole('button',{name:'Zatrzymaj metronom'})).toBeTruthy();
+});
+it('reports an OS pause and allows explicit restart',async()=>{
+ const {container}=render(<Metronome/>);await start();act(()=>container.querySelector('audio')!.dispatchEvent(new Event('pause')));
+ expect(screen.getByRole('alert').textContent).toContain('system');await start();expect(screen.queryByRole('alert')).toBeNull();
+});
+it('ignores late play resolution after cancellation',async()=>{
+ let resume!:()=>void;play.mockReturnValueOnce(new Promise<void>(resolve=>resume=resolve));
+ render(<Metronome/>);fireEvent.click(screen.getByRole('button',{name:'Uruchom metronom'}));fireEvent.click(screen.getByRole('button',{name:'Anuluj uruchamianie metronomu'}));
+ await act(async()=>resume());expect(screen.getByRole('button',{name:'Uruchom metronom'})).toBeTruthy();
+});
+it('releases native playback on unmount',async()=>{const {unmount}=render(<Metronome compact/>);await start();pause.mockClear();unmount();expect(pause).toHaveBeenCalledOnce();expect(URL.revokeObjectURL).toHaveBeenCalled();});
+it('provides retry after rejected playback',async()=>{play.mockRejectedValueOnce(Error('Blocked'));render(<Metronome/>);await start();expect(screen.getByRole('alert').textContent).toContain('Nie udało');await start();expect(screen.queryByRole('alert')).toBeNull();});
+it('changes tempo and meter by replacing the native track while playing',async()=>{
+ render(<Metronome/>);await start();await act(async()=>fireEvent.click(screen.getByRole('button',{name:'Zwiększ tempo'})));
+ await act(async()=>fireEvent.change(screen.getByRole('combobox',{name:'Metrum metronomu'}),{target:{value:'3'}}));
+ expect(play).toHaveBeenCalledTimes(3);expect(URL.revokeObjectURL).toHaveBeenCalledTimes(2);expect(screen.getByRole('button',{name:'Zatrzymaj metronom'})).toBeTruthy();
+});
+it('allows typing a new tempo without clamping partial digits',()=>{render(<Metronome compact/>);const field=screen.getByRole('spinbutton',{name:'Tempo metronomu w BPM'}) as HTMLInputElement;fireEvent.change(field,{target:{value:'9'}});expect(field.value).toBe('9');fireEvent.change(field,{target:{value:'90'}});fireEvent.blur(field);expect(field.value).toBe('90');});

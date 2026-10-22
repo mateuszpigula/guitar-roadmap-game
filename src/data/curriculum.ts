@@ -1,6 +1,7 @@
 import type { Chapter, Lesson, Category } from '../types';
+import {refineLessons} from './lessonRefinements';
 import { expandCurriculum, expansionSources } from './expansion';
-export const curriculumVersion = 3;
+export const curriculumVersion = 4;
 export const sources: Record<string, {title: string; url: string; language: string; access: string}> = {
  ...expansionSources,
  classical: {title: 'This is Classical Guitar · program i lekcje',url:'https://www.thisisclassicalguitar.com/curriculum/',language:'EN',access:'Bezpłatne filmy; część książek płatna'},
@@ -171,3 +172,6 @@ const directReferences: [string[],string,string][] = [
  [['ch-07-1','ch-07-2'],'Barré: lekcja i ćwiczenia','https://www.thisisclassicalguitar.com/barre-lessons-and-exercises-for-guitar/'],
 ];
 for(const [ids,title,url] of directReferences){const key=ids[0]+'-source';sources[key]={title,url,language:'EN',access:'Bezpłatna lekcja'};ids.forEach(id=>{lessonById[id].source=key;});}
+
+// Focused references and explicit practice instructions, keeping all progress IDs.
+refineLessons(lessons,sources);

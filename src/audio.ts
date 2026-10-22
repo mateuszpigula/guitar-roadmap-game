@@ -6,6 +6,7 @@ function setAudioMode(){
  // A microphone needs play-and-record; don't switch its session to playback.
  try{const session=(navigator as SessionNavigator).audioSession;if(session)session.type=recordings?'play-and-record':'playback';}catch{/* Optional API; other browsers use their normal audio routing. */}
 }
+export function playbackAudioSession(){setAudioMode();}
 export function recordingAudioSession(){recordings++;setAudioMode();let released=false;return()=>{if(!released){released=true;recordings--;setAudioMode();}};}
 export async function audioContext(){
  setAudioMode();
