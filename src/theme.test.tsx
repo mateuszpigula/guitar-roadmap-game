@@ -18,18 +18,20 @@ it('follows the system until explicitly overridden and returns to it',()=>{
  render(<View/>);expect(screen.getByTestId('theme').textContent).toBe('light');
  act(()=>{media.matches=true;media.dispatchEvent(new Event('change'));});
  expect(document.documentElement.dataset.theme).toBe('dark');
- fireEvent.change(screen.getByLabelText('Motyw kolorystyczny'),{target:{value:'light'}});
+ fireEvent.click(screen.getByRole('button',{name:'Motyw: jasny'}));
  act(()=>media.dispatchEvent(new Event('change')));
  expect(screen.getByTestId('theme').textContent).toBe('light');
- fireEvent.change(screen.getByLabelText('Motyw kolorystyczny'),{target:{value:'system'}});
+ fireEvent.click(screen.getByRole('button',{name:'Motyw: systemowy'}));
  expect(screen.getByTestId('theme').textContent).toBe('dark');
  expect(document.querySelector('meta[name="theme-color"]')?.getAttribute('content')).toBe('#191d1a');
 });
 it('restores the choice after remount without modifying learning data',()=>{
  localStorage.setItem('learning-progress','keep');
- const first=render(<View/>);fireEvent.change(screen.getByLabelText('Motyw kolorystyczny'),{target:{value:'dark'}});
+ const first=render(<View/>);fireEvent.click(screen.getByRole('button',{name:'Motyw: ciemny'}));
  first.unmount();render(<View/>);
  expect(screen.getByTestId('theme').textContent).toBe('dark');
+ expect(screen.getByRole('button',{name:'Motyw: ciemny',pressed:true})).toBeTruthy();
+ expect(screen.getAllByRole('button',{pressed:true})).toHaveLength(1);
  expect(localStorage.getItem('learning-progress')).toBe('keep');
 });
 it('receives a preference changed in another tab',()=>{
@@ -42,7 +44,7 @@ it('receives a preference changed in another tab',()=>{
 it('still switches theme if browser storage is unavailable',()=>{
  vi.spyOn(Storage.prototype,'getItem').mockImplementation(()=>{throw new Error('blocked');});
  vi.spyOn(Storage.prototype,'setItem').mockImplementation(()=>{throw new Error('blocked');});
- render(<View/>);fireEvent.change(screen.getByLabelText('Motyw kolorystyczny'),{target:{value:'dark'}});
+ render(<View/>);fireEvent.click(screen.getByRole('button',{name:'Motyw: ciemny'}));
  expect(document.documentElement.dataset.theme).toBe('dark');
  expect(screen.getByText(/Motyw działa w tej sesji/)).toBeTruthy();
 });
@@ -60,7 +62,7 @@ it('rerenders CAPTCHA in the chosen theme and invalidates its old token',async()
  render(<ThemeProvider><ThemePicker/><Turnstile siteKey="test-key" onToken={onToken}/></ThemeProvider>);
  await waitFor(()=>expect(api.render).toHaveBeenCalledOnce());
  expect(api.render.mock.calls[0][1]).toMatchObject({theme:'light'});
- onToken.mockClear();fireEvent.change(screen.getByLabelText('Motyw kolorystyczny'),{target:{value:'dark'}});
+ onToken.mockClear();fireEvent.click(screen.getByRole('button',{name:'Motyw: ciemny'}));
  await waitFor(()=>expect(api.render).toHaveBeenCalledTimes(2));
  expect(api.render.mock.calls[1][1]).toMatchObject({theme:'dark'});
  expect(api.remove).toHaveBeenCalledWith('widget');expect(onToken).toHaveBeenCalledWith('');
