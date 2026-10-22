@@ -7,6 +7,8 @@ import {ThemePicker} from './components/ThemePicker';
 import {Turnstile} from './components/Turnstile';
 let media:EventTarget&{matches:boolean};
 function Probe(){const {theme}=useTheme();return <output data-testid="theme">{theme}</output>;}
+function openPicker(){fireEvent.click(screen.getByRole('button',{name:/Zmień motyw/}));}
+function chooseTheme(name:string){openPicker();fireEvent.click(screen.getByRole('button',{name}));}
 function View(){return <ThemeProvider><ThemePicker/><Probe/></ThemeProvider>;}
 beforeEach(()=>{
  localStorage.clear();media=Object.assign(new EventTarget(),{matches:false});
@@ -18,18 +20,19 @@ it('follows the system until explicitly overridden and returns to it',()=>{
  render(<View/>);expect(screen.getByTestId('theme').textContent).toBe('light');
  act(()=>{media.matches=true;media.dispatchEvent(new Event('change'));});
  expect(document.documentElement.dataset.theme).toBe('dark');
- fireEvent.click(screen.getByRole('button',{name:'Motyw: jasny'}));
+ chooseTheme('Motyw: jasny');
  act(()=>media.dispatchEvent(new Event('change')));
  expect(screen.getByTestId('theme').textContent).toBe('light');
- fireEvent.click(screen.getByRole('button',{name:'Motyw: systemowy'}));
+ chooseTheme('Motyw: systemowy');
  expect(screen.getByTestId('theme').textContent).toBe('dark');
  expect(document.querySelector('meta[name="theme-color"]')?.getAttribute('content')).toBe('#191d1a');
 });
 it('restores the choice after remount without modifying learning data',()=>{
  localStorage.setItem('learning-progress','keep');
- const first=render(<View/>);fireEvent.click(screen.getByRole('button',{name:'Motyw: ciemny'}));
+ const first=render(<View/>);chooseTheme('Motyw: ciemny');
  first.unmount();render(<View/>);
  expect(screen.getByTestId('theme').textContent).toBe('dark');
+ openPicker();
  expect(screen.getByRole('button',{name:'Motyw: ciemny',pressed:true})).toBeTruthy();
  expect(screen.getAllByRole('button',{pressed:true})).toHaveLength(1);
  expect(localStorage.getItem('learning-progress')).toBe('keep');
@@ -44,7 +47,7 @@ it('receives a preference changed in another tab',()=>{
 it('still switches theme if browser storage is unavailable',()=>{
  vi.spyOn(Storage.prototype,'getItem').mockImplementation(()=>{throw new Error('blocked');});
  vi.spyOn(Storage.prototype,'setItem').mockImplementation(()=>{throw new Error('blocked');});
- render(<View/>);fireEvent.click(screen.getByRole('button',{name:'Motyw: ciemny'}));
+ render(<View/>);chooseTheme('Motyw: ciemny');
  expect(document.documentElement.dataset.theme).toBe('dark');
  expect(screen.getByText(/Motyw działa w tej sesji/)).toBeTruthy();
 });
@@ -62,8 +65,30 @@ it('rerenders CAPTCHA in the chosen theme and invalidates its old token',async()
  render(<ThemeProvider><ThemePicker/><Turnstile siteKey="test-key" onToken={onToken}/></ThemeProvider>);
  await waitFor(()=>expect(api.render).toHaveBeenCalledOnce());
  expect(api.render.mock.calls[0][1]).toMatchObject({theme:'light'});
- onToken.mockClear();fireEvent.click(screen.getByRole('button',{name:'Motyw: ciemny'}));
+ onToken.mockClear();chooseTheme('Motyw: ciemny');
  await waitFor(()=>expect(api.render).toHaveBeenCalledTimes(2));
  expect(api.render.mock.calls[1][1]).toMatchObject({theme:'dark'});
  expect(api.remove).toHaveBeenCalledWith('widget');expect(onToken).toHaveBeenCalledWith('');
+});
+
+it('keeps choices hidden until opened and closes after selection with focus restored',()=>{
+ render(<View/>);
+ const trigger=screen.getByRole('button',{name:/Zmień motyw/});
+ expect(trigger.getAttribute('aria-expanded')).toBe('false');
+ expect(screen.queryByRole('group',{name:'Motyw kolorystyczny'})).toBeNull();
+ chooseTheme('Motyw: ciemny');
+ expect(trigger.getAttribute('aria-expanded')).toBe('false');
+ expect(document.activeElement).toBe(trigger);
+ expect(trigger.getAttribute('aria-label')).toBe('Zmień motyw (ciemny)');
+});
+it('dismisses on Escape, outside pointer and focus leaving the picker',()=>{
+ render(<><View/><button>Poza wyborem</button></>);
+ const trigger=screen.getByRole('button',{name:/Zmień motyw/});
+ openPicker();fireEvent.keyDown(document,{key:'Escape'});
+ expect(document.activeElement).toBe(trigger);
+ expect(trigger.getAttribute('aria-expanded')).toBe('false');
+ openPicker();fireEvent.pointerDown(screen.getByRole('button',{name:'Poza wyborem'}));
+ expect(trigger.getAttribute('aria-expanded')).toBe('false');
+ openPicker();fireEvent.blur(trigger,{relatedTarget:screen.getByRole('button',{name:'Poza wyborem'})});
+ expect(trigger.getAttribute('aria-expanded')).toBe('false');
 });
