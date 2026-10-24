@@ -1,7 +1,9 @@
+import {focusLessonSources} from './focusedSources';
+import {refineFeedbackLessons} from './feedbackRefinements';
 import type { Chapter, Lesson, Category } from '../types';
 import {refineLessons} from './lessonRefinements';
 import { expandCurriculum, expansionSources } from './expansion';
-export const curriculumVersion = 4;
+export const curriculumVersion = 5;
 export const sources: Record<string, {title: string; url: string; language: string; access: string}> = {
  ...expansionSources,
  classical: {title: 'This is Classical Guitar · program i lekcje',url:'https://www.thisisclassicalguitar.com/curriculum/',language:'EN',access:'Bezpłatne filmy; część książek płatna'},
@@ -175,3 +177,7 @@ for(const [ids,title,url] of directReferences){const key=ids[0]+'-source';source
 
 // Focused references and explicit practice instructions, keeping all progress IDs.
 refineLessons(lessons,sources);
+
+refineFeedbackLessons(lessons);
+
+focusLessonSources(lessons,sources);

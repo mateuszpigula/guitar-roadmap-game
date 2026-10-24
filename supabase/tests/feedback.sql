@@ -28,6 +28,7 @@ do $$ declare f public.lesson_feedback; repeated public.lesson_feedback; e jsonb
  begin perform public.submit_lesson_feedback(gen_random_uuid(),'ch-01-1',2,'other',repeat('a',5001));raise exception 'Oversized body accepted';exception when invalid_parameter_value then null;end;
  begin perform public.submit_lesson_feedback(gen_random_uuid(),'ch-01-1',2,'invalid','Test');raise exception 'Invalid category accepted';exception when invalid_parameter_value then null;end;
  begin perform public.review_lesson_feedback(f.id,1,'resolved');raise exception 'Reader review allowed';exception when insufficient_privilege then null;end;
+ begin perform public.review_lesson_feedback(f.id,1,'resolved','Nieautoryzowany komentarz');raise exception 'Reader comment allowed';exception when insufficient_privilege then null;end;
  begin perform public.export_lesson_feedback('all');raise exception 'Reader exported other users';exception when insufficient_privilege then null;end;
  e:=public.export_lesson_feedback('mine');if (e->>'count')::integer<>1 or e->>'format'<>'guitar-quest-feedback' then raise exception 'Own export failed';end if;
 end $$;
@@ -58,6 +59,22 @@ do $$ declare f public.lesson_feedback; e jsonb; begin
  begin perform public.review_lesson_feedback(f.id,2,'invalid');raise exception 'Invalid review status accepted';exception when invalid_parameter_value then null;end;
  e:=public.export_lesson_feedback('all');if (e->>'count')::integer<1007 then raise exception 'Admin export incomplete';end if;
  if not exists(select 1 from jsonb_array_elements(e->'entries') x where x->>'id'=f.id::text and x->>'status'='planned') then raise exception 'Export missed reviewed feedback';end if;
+end $$;
+do $$ declare f public.lesson_feedback; e jsonb; begin
+ f:=public.review_lesson_feedback('fda10000-0000-4000-8000-000000000001',2,'resolved','  Dodano diagramy w v5.  ');
+ if f.review_comment<>'Dodano diagramy w v5.' or f.revision<>3 or f.status<>'resolved' then raise exception 'Comment not saved';end if;
+ begin perform public.review_lesson_feedback(f.id,2,'resolved','Stary zapis');raise exception 'Stale comment accepted';exception when serialization_failure then null;end;
+ begin perform public.review_lesson_feedback(f.id,3,'resolved',repeat('x',5001));raise exception 'Oversized comment accepted';exception when invalid_parameter_value then null;end;
+ f:=public.review_lesson_feedback(f.id,3,'read');
+ if f.review_comment<>'Dodano diagramy w v5.' then raise exception 'Legacy status update erased comment';end if;
+end $$;
+reset role;
+select set_config('request.jwt.claim.sub','fda00000-0000-4000-8000-000000000001',true);
+set local role authenticated;
+do $$ declare e jsonb; begin
+ e:=public.export_lesson_feedback('mine');
+ if not exists(select 1 from jsonb_array_elements(e->'entries') x where x->>'id'='fda10000-0000-4000-8000-000000000001' and x->>'review_comment'='Dodano diagramy w v5.') then raise exception 'Owner cannot export response';end if;
+ if not exists(select 1 from public.lesson_feedback where id='fda10000-0000-4000-8000-000000000001' and review_comment='Dodano diagramy w v5.') then raise exception 'Owner cannot read response';end if;
 end $$;
 rollback;
 select 'PASS: feedback RLS, account isolation, immutable context, retries, input validation, admin reviews, stale writes, full export of 1006+ entries. Test users and feedback rolled back.' as verification;

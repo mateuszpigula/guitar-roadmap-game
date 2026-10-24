@@ -10,7 +10,7 @@ export type FeedbackStatus=keyof typeof feedbackStatuses;
 export type FeedbackScope='mine'|'all';
 export interface Feedback {
  id:string;user_id:string;lesson_id:string;curriculum_version:number;category:FeedbackCategory;body:string;
- created_at:string;status:FeedbackStatus;revision:number;reviewed_at:string|null;
+ created_at:string;status:FeedbackStatus;revision:number;reviewed_at:string|null;review_comment?:string;
  context:{lesson:Lesson;chapter:Chapter;source:Source;prerequisites:{id:string;title:string}[];songChoices:Song[]};
 }
 export interface FeedbackExport {format:'guitar-quest-feedback';schemaVersion:1;exportedAt:string;scope:FeedbackScope;count:number;entries:Feedback[]}
@@ -30,8 +30,8 @@ export async function fetchFeedback({userId,scope='mine',lessonId,cursor}:{userI
  if(error)throw Error('Nie udało się pobrać feedbacku. Sprawdź połączenie i spróbuj ponownie.');
  return {rows:(data as Feedback[]).slice(0,50),count:count??0,hasMore:!!data&&data.length>50};
 }
-export async function reviewFeedback(row:Feedback,status:FeedbackStatus):Promise<Feedback>{
- const {data,error}=await client().rpc('review_lesson_feedback',{feedback_id:row.id,expected_revision:row.revision,next_status:status}).abortSignal(AbortSignal.timeout(15000)).single();
+export async function reviewFeedback(row:Feedback,status:FeedbackStatus,comment?:string):Promise<Feedback>{
+ const {data,error}=await client().rpc('review_lesson_feedback',{feedback_id:row.id,expected_revision:row.revision,next_status:status,...(comment!==undefined?{admin_comment:comment.trim()}:{} )}).abortSignal(AbortSignal.timeout(15000)).single();
  if(error)throw Error(error.message);return data as Feedback;
 }
 export async function exportFeedback(scope:FeedbackScope):Promise<FeedbackExport>{

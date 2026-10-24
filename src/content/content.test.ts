@@ -40,3 +40,7 @@ describe('published curriculum',()=>{
 it('never sends a lesson to a general Classical Guitar index',()=>{
  for(const lesson of bundledContent.lessons){const url=new URL(bundledContent.sources[lesson.source].url);if(url.hostname==='www.thisisclassicalguitar.com')expect(['/','/lessons/','/curriculum/']).not.toContain(url.pathname);}
 });
+it('uses focused materials instead of provider homepages and course catalogs',()=>{
+ const forbidden=['/','/lessons','/curriculum','/guitar-lessons','/modules','/beginner','/@MartyMusic','/browse/learning-paths'];
+ for(const lesson of bundledContent.lessons){const url=new URL(bundledContent.sources[lesson.source].url);expect(forbidden,lesson.id).not.toContain(url.pathname.replace(/\/$/,'' )||'/');}
+});

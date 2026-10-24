@@ -96,3 +96,15 @@
 .stroke-comparison{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.stroke-comparison>div{padding:14px;border:1px solid var(--line);border-radius:8px}.stroke-comparison h3{font-size:18px;margin:0}.stroke-comparison h3 small{display:block;font-size:12px;color:var(--muted);font-weight:400;margin-top:4px}.stroke-comparison svg{width:100%;height:auto;margin-top:10px}.stroke-comparison svg text{fill:var(--muted);font-size:16px}.guide-strings{stroke:var(--muted);stroke-width:2}.guide-movement{fill:none;stroke:var(--accent);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.guide-start{fill:var(--panel);stroke:var(--accent);stroke-width:2}.guide-end{fill:var(--accent)}
 .technique-video{display:inline-flex;align-items:center;gap:9px;min-height:44px;color:var(--accent);font-size:14px;font-weight:500;line-height:1.4;margin-top:8px;text-decoration:underline;text-underline-offset:4px}.technique-video svg{flex-shrink:0}.metronome-background{color:var(--muted);line-height:1.5;margin:10px 0 0}
 @media(max-width:700px){.technique-guide{padding:18px}.finger-key{grid-template-columns:repeat(2,minmax(0,1fr))}.stroke-comparison{grid-template-columns:1fr}.stroke-comparison svg{max-height:130px}.technique-guide h2{font-size:23px}}
+
+/* Practice references stay next to the exercise; finger numbers are not fret numbers. */
+.lesson-chords{margin:26px 0 36px;padding:22px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.lesson-chord-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin:20px 0}
+.lesson-chord-grid figure{margin:0;text-align:center;border:1px solid var(--line);border-radius:8px;padding:10px 4px}
+.lesson-chord-grid .chord{width:100%;max-width:180px;height:auto;color:var(--ink)}
+.lesson-chord-grid figcaption small{display:block;color:var(--muted);font-size:11px;margin-top:5px}
+.chord-finger-dot{fill:var(--accent)}.chord-finger-number{fill:var(--panel)!important}
+.feedback-response{padding:16px;margin:16px 0;border-left:3px solid var(--accent);background:var(--paper);border-radius:0 6px 6px 0}
+.feedback-response p{white-space:pre-wrap;margin:8px 0}.feedback-response small{color:var(--muted)}
+.feedback-comment-form{margin-top:18px}.feedback-comment-form textarea{min-height:110px;width:100%;margin-top:8px}.feedback-comment-form .small{margin:8px 0 12px}
+@media(max-width:480px){.lesson-chords{padding:16px}.lesson-chord-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}}
